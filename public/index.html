@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en" ng-app="myApp">
+<head>
+  <meta charset="utf-8">
+  <title>TravelMarks</title>
+  <link rel="stylesheet" href="bootstrap/css/bootstrap.css" />
+  <link rel="stylesheet" href="css/flat-ui.css" />
+  <link rel="stylesheet" href="css/app.css" />
+  <script type="text/javascript" src="lib/jquery.min.js"></script>
+  <script type="text/javascript" src="lib/binaryajax.js"></script>
+  <script type="text/javascript" src="lib/exif.js"></script>
+  <script type="text/javascript" src="lib/masonry.min.js"></script>
+  <script type="text/javascript" src="lib/md5.js"></script>
+</head>
+<body>
+  <div class="nav" ng-controller="NavCtrl">
+    <div class="logo left"><img src="img/logo-small-rotate.png" height="28px" /></div>
+    <div class="nav-a left">
+      <a href="#home">Explore</a>
+      <a href="#home/refresh" id="nav-btn-home" class="active">Marks</a>
+    </div>
+    <div class="nav-buttons right">
+      <div ng-show="email" >
+        <div class="username" ng-bind-template="{{email}}"></div>
+        <div class="btn-signout"><a ng-href="{{signout}}">[Sign Out]</a></div>
+        <div class="avatar"><img ng-src="{{avatar}}" /></div>
+      </div>
+    </div>
+  </div>
+  <section class="mod" id="mod-loading">Loading...</section>
+  <section class="mod" id="mod-signIn" ng-controller="SignInCtrl">
+    <div id="signIn-cover-wrap"><img id="signIn-cover" src="img/samples/1.jpg" /></div>
+    <div class="container" style="width: 1020px;">
+      <div class="row">
+        <div class="span8">
+          <div class="brand"><img src="img/logo-small-rotate.png" />TravelMarks</div>
+          <br />
+          <div class="location"><strong>- New Zealand</strong></div>
+          <br />
+          <div class="desc">New Zealand is situated some 1,500 kilometres (900 mi) east of Australia across the Tasman Sea and roughly 1,000 kilometres (600 mi) south of the Pacific island nations of New Caledonia, Fiji, and Tonga. Because of its remoteness, it was one of the last lands to be settled by humans.</div>
+          <div class="author right">Marked by 500px.com</div>
+        </div>
+        <div class="span5">
+          <div class="login-box right">
+            <input ng-model="inputUsername" spellcheck="false" placeholder="Username" class="span4" id="login-username" type="text" />
+            <br />
+            <input ng-model="inputPassword" placeholder="Password" class="span4" id="login-password" type="password" />
+            <br />
+            <input ng-model="inputRepassword" placeholder="Confirm your password" class="span4" id="login-repassword" type="password" ng-show="showEmail"/>
+            <br ng-show="showEmail" />
+            <input ng-model="inputEmail" placeholder="E-mail" class="span4" id="login-email" type="email" ng-show="showEmail" />
+            <div class="error" ng-bind-template="{{errorMessage}}" ng-show="errorMessage!=''"></div>
+            <div class="desc"><a href="#" ng-click='signUp($event)' ng-bind-template='{{loginBoxDesc}}'>Sign up right now!</a></div>
+            <button id="login-btn" class="btn right" ng-bind-template='{{loginBtn}}' ng-click='submit()'>Sign In</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section><!-- /#mod-signIn -->
+  <section class="mod" id="mod-home" ng-controller="HomeCtrl">
+    <div class="container wrap-padding">
+      <div class="mod-nav">
+        <div class="head left">My Marks</div>
+
+        <div class="buttons">
+          <div class="control-box">
+            <div class="control-btn"></div>
+            <div class="control-box-btns">
+              <div ng-click="modeSwitch('large')">Large</div>
+              <div ng-click="modeSwitch('middle')">Middle</div>
+              <div ng-click="modeSwitch('small')">Small</div>
+              <div ng-click="modeSwitch('list')">List</div>
+            </div>
+          </div>
+          <a href="#upload"><button class="btn">Create a New Mark</button></a>
+        </div>
+        <div class="desc left"><span class="big-num" ng-bind-template="{{totalMarks}}">0</span> marks and <span class="big-num" ng-bind-template="{{totalPictures}}">0</span> pictures.</div>
+        <div class="clear"></div>
+      </div>
+      <div class="mark-empty" ng-show="marks.length <= 0">
+        :( Oops, there is so lonely. Upload some pictures!
+      </div>
+      <div class="marks-map" ng-show="!demoDisplay" ng-click="demoDisplay = true">
+        <div class="map-area"></div>
+        <div class="map-pin" style="top: 125px; left: 135px">
+          <div class="pictures-container" style="left: -65px;">
+            <img src="img/samples/1.jpg" style="max-width: 48px; height: 48px;" />
+            <img src="img/samples/2.jpg" style="max-width: 48px; height: 48px;" />
+            <img src="img/samples/3.jpg" style="max-width: 48px; height: 48px;" />
+          </div>
+          <img src='img/logo-small-border.png' width="20px" />
+        </div>
+        <div class="map-pin" style="top: 255px; left: 735px">
+          <div class="pictures-container" style="left: -65px;">
+            <img src="img/samples/4.jpg" style="max-width: 48px; height: 48px;" />
+            <img src="img/samples/5.jpg" style="max-width: 48px; height: 48px;" />
+            <img src="img/samples/6.jpg" style="max-width: 48px; height: 48px;" />
+          </div>
+          <img src='img/logo-small-border.png' width="20px" />
+        </div>
+        <div class="map-pin" style="top: 225px; left: 625px">
+
+          <img src='img/logo-small-border.png' width="20px" />
+        </div>
+      </div>
+      <div class="marks-container">
+        <div class="mark" ng-repeat="mark in marks" ng-click="goTo(mark._id)">
+          <div class="mark-cover-1"><div class="cover" ng-style="{'background-image': 'url(' + mark.cover + ')'}"></div></div>
+          <div class="mark-cover-2"><div class="cover" ng-style="{'background-image': 'url(' + mark.cover + ')'}"></div></div>
+          <div class="desc">
+            <span class="title">{{mark.title}}</span>
+            <span class="location">{{mark.location}}</span>
+            <span class="date">{{filterDate(mark.date)}}</span>
+          </div>
+          <div class="summary" ng-click="$event.stopPropagation()">
+            <span>{{mark.summary}}</span>
+            <br />
+            <br />
+            
+          </div>
+        </div>
+      </div><!-- /.marks-container -->
+    </div>
+  </section><!-- /#mod-home -->
+
+  <section class="mod" id="mod-upload" ng-class="ifUploading()" ng-controller="UploadCtrl">
+    <input type="file" class="upload-input" ng-change="fileChange()" ng-model="inputFile" />
+    <div class="wrap-padding">
+      <div class="container">
+        <h3>Create a Mark!</h3>
+
+        <div class="item first-child">
+          <strong>Title</strong>
+          <input type="text" ng-model="title" id="upload-title-input" />
+        </div>
+        <div class="item">
+          <strong>Location</strong>
+          <input type="text" ng-model="location" />
+        </div>
+        <div class="item">
+          <strong>Summary</strong>
+          <textarea auto-height-textarea  ng-model="summary"></textarea>
+        </div>
+        <br />
+        <ul class="item-box">
+          <li ng-repeat="it in items" data-item-no="{{$index}}">
+            <div class="upload-pictures" ng-click="upload($event)">
+              <div class="drop-pictures"><span>Drop Pictures Here</span></div>
+              <div class="upload-pictures-container">
+                <div>Upload Pictures...</div>
+                <div class="clear"></div>
+                <br ng-hide="it.pictures.length == 0" />
+                <div class="upload-pictures-list" data-order="{{$index}}" ng-repeat="pic in it.pictures" ng-hide="it.pictures.length == 0">
+                  
+                  <div class="upload-gray-wrap">
+                    <img ng-src="{{pic.src}}" />
+                  </div>
+                  <div class="upload-progress-text">{{pic.progress}}%</div>
+                  <div class="upload-progress" ng-style="{'width': progressWidth(pic)}"><img ng-src="{{pic.src}}" /></div>
+                </div>
+              </div>
+              <div class="clear"></div>
+            </div>
+            <div class='it-post-box'><textarea auto-height-textarea ng-model='it.post' class='it-post' placeholder='This is...' ></textarea></div>
+          </li>
+        </ul>
+        <button class='btn btn-info' ng-click='addMore()'>Upload More</button>
+        <button class='btn btn-success' ng-click='save()'>Save</button>
+      </div>
+    </div>
+  </section><!-- /#mod-upload -->
+
+  <section class="mod" id="mod-detail" ng-controller="DetailCtrl">
+    <div class="container">
+      <div class="wrap-padding">
+        <div class="top-wrapper">
+          <div class="head">
+            <div class="left title-border">
+              <span class="title" ng-bind-template="{{title}}"></span>
+              <span class="author" ng-bind-template="@{{author}}"></span>
+            </div>
+            
+            <div class="total-pictures"><span ng-bind-template="{{total}}"></span>pictures<br /><span ng-bind-template="{{dateFilter(date, 0)}}" class="date"></span></div>
+          </div>
+          <div class="clear"></div>
+     
+          <div class="float-wrap">
+            <div class="location" ng-bind-template="{{location}}"></div>
+            <div class="read" ng-bind-template="{{read}}"></div>
+            <div class="buttons">
+              <div class="collect">❤</div>
+              <div class="mode" ng-click="switchMode()"></div>
+            </div>
+          </div>
+          <div class="clear"></div>
+          <div class="summary" ng-bind-template="{{wordWrap(summary)}}"></div>
+        </div>
+        <br />
+        <ul class="item-box" ng-class="getMode()">
+          <li ng-repeat="it in items">
+            <div class="item-date" ng-bind-template="- {{dateFilter(it.date, 1)}} -"></div>
+            <div ng-repeat="pic in it.pictures" ng-class="ifLoad($parent.$index, $index)" class="it-pic-container">
+              <img ng-src="{{pic.src}}" />
+            </div>
+            <div class="it-post" ng-bind-template="{{it.post}}" ></div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section><!-- /$mod-detail -->
+
+  <!-- In production use:
+  <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+  -->
+  <script src="lib/angular/angular.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/services.js"></script>
+  <script src="js/controllers.js" charset='utf-8'></script>
+  <script src="js/filters.js"></script>
+  <script src="js/directives.js"></script>
+  <script type="text/javascript" src="lib/angular/angular-cookies.min.js"></script>
+</body>
+</html>

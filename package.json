@@ -1,0 +1,15 @@
+{
+  "name": "travelmarks",
+  "description": "",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "express": "3.x",
+    "mongoose": "3.5.x",
+    "ejs": "0.8.4",
+    "validator": "0.3.7",
+    "xss": "0.0.5",
+    "imagemagick": "*",
+    "eventproxy": "0.2.5"
+  }
+}
