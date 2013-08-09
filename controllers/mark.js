@@ -69,6 +69,51 @@ exports.getMarks = function (req, res, next) {
   });
 
 };
+/**
+ * explore marks
+ * @param {String} req.params.type 可在latest, popular, worldmap, trends, friends等里取值
+ * 获取相应的marks
+ * @param {String} req.params.offset 分页起点, 以跳过的item数为单位
+ */
+exports.exploreMarks = function (req, res, next) {
+  if (!req.param('type')) {
+    return res.json({status: -1, message: '请输入完整呀!'});
+  }
+  var type = req.param('type');
+  if (type === 'friends' && !req.session.user) {
+    return res.json({status: -1, message: '请先登录'});
+  }
+  var offset = req.param('offset') || 0;
+
+  switch(type) {
+    case 'latest':
+      Mark.getMarksByQuery({}, {skip: offset, limit: 12, sort: {date: -1}}, function (err, marks) {
+        if (err) return next(err);
+        var done = function () {
+          var result = [];
+          for (var i = 0, length = marks.length; i < length; i++) {
+            var obj = {};
+            utils.fillObject(marks[i], obj, ['_id', 'author', 'author_name', 'cover', 'date', 'latitude', 'longtitude', 'location', 'summary', 'title', 'author_avatar']);
+            result.push(obj);
+          }
+          res.json(result);
+        };
+        var ep = new EventProxy;
+        ep.after('userGot', marks.length, done);
+        for (var i = marks.length; i--; ){
+          (function (j) {
+            var author_id = marks[j].author;
+            User.getUserById(author_id, function (err, author) {
+              if (err) return next(err);
+              marks[j].author_avatar = utils.md5(author.email);
+              marks[j].author_name = author.name;
+              ep.emit('userGot');
+            });
+          })(i);
+        }
+      });
+  }
+};
 
 /**
  * 获取指定的mark
@@ -122,7 +167,17 @@ exports.getMark = function (req, res, next) {
 exports.createItem = function (req, res, next) {
   try {
     var markId = req.body.markId,
-        post = sanitize(decodeURIComponent(req.body.post)).xss().substr(0, 8000);
+        post = sanitize(req.body.post).xss().substr(0, 8000),
+        title = req.body.title,
+        date = req.body.date;
+    if (date) {
+      date = parseInt(date);
+      if (isNaN(date)) throw Error('Invalid Date');
+      date = new Date(date);
+    }
+    if (title) {
+      title = sanitize(title).xss().substr(0, 60);
+    }
   } catch(e) {
     return res.json({status: -1, message: "非法输入"});
   }
@@ -135,7 +190,7 @@ exports.createItem = function (req, res, next) {
     if(err) return next(err);
     if(!m || (typeof m === 'array' && m.length === 0)) return res.json({status: -1, message: '没有足够的权限来创建这条景点'});
 
-    Item.createItem(markId, req.session.user._id, post, function(err, it) {
+    Item.createItem(markId, req.session.user._id, title, date, post, function(err, it) {
       if(err) return next(err);
       return res.json({status: 1, message: '创建成功', data: {itemId: it._id}});
     });

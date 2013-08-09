@@ -94,10 +94,77 @@ angular.module('myApp.controllers', []).
 
     };
   }]).
+  controller('ExploreCtrl', ['$scope', '$http', 'User', 'ModManager', function ($scope, $http, User, ModManager) {
+    $scope.marks = [];
+    var cachedMarks;
+
+    ModManager.addListener('before', function (mod) {
+      if (mod !== 'explore') return;
+
+      // TODO
+      if (cachedMarks) return;
+      if (msry) {
+        displayMode = !displayMode;
+        msry.masonry('destroy');
+        msry = null;
+        document.querySelector('.explore-container').classList.remove('tworows');
+      }
+      $http.get('/mark/explore?type=' + 'latest').
+      success(function (data) {
+        if (data.status === -1) return alert('TODO: Error!');
+
+        $scope.marks = data;
+        cachedMarks = true;
+      }).
+      error(function () {
+        // TODO
+      });
+    });
+
+    var displayMode = 0,
+        msry;
+    function getMsry() {
+      return $('.explore-container').masonry({
+        itemSelector: '.explore-mark',
+        columnWidth: 442,
+        gutter: 10
+      });
+    }
+    $scope.switchMode = function () {
+      displayMode = !displayMode;
+      if (displayMode) {
+        // 2 rows mode
+        msry = getMsry();
+        document.querySelector('.explore-container').classList.add('tworows');
+        setTimeout(function () {
+          msry = getMsry();
+        }, 0);
+      } else {
+        // single row mode
+        if (msry) {
+          msry.masonry('destroy');
+          msry = null;
+          document.querySelector('.explore-container').classList.remove('tworows');
+        }
+      }
+    };
+    $scope.getAvatar = function (url) {
+      return 'http://www.gravatar.com/avatar/' + url + '?s=24&d=mm';
+    };
+
+    // go to detail
+    $scope.goDetail = function (ev) {
+      while (ev.target.tagName !== 'LI') ev.target = ev.target.parentElement;
+      var order = ev.target.dataset.itemNo;
+      location.hash = '#detail/' + $scope.marks[order]['_id'];
+    };
+
+  }]).
   controller('NavCtrl', ['$scope', '$http', 'User', function ($scope, $http, User) {
     function bindUserinfo() {
       if (User.email) {
-        $scope.avatar = 'http://www.gravatar.com/avatar/' + hex_md5(User.email);
+        $scope.avatar = 'http://www.gravatar.com/avatar/' + hex_md5(User.email) + '?s=32&' + 
+          'd=mm';
         $scope.email = User.email;
         $scope.signout = "signout?_csrf=" + User._csrf;
         //$scope.$digest();
@@ -211,7 +278,13 @@ angular.module('myApp.controllers', []).
           $scope.total = 0;
           $scope.date = '';
           $scope.items = [];
+          cachedId = HashManager.getArgs().id;
+          setTimeout(function () {
+            document.body.scrollTop = 0;
+          }, 300);
         }
+      } else {
+        return;
       }
 
       $http({
@@ -236,6 +309,7 @@ angular.module('myApp.controllers', []).
           data.items.forEach(function (val) {
             var it = Item.one();
             it.post = val.post;
+            it.title = val.title;
             it.date = val.date;
             val.pictures.forEach(function (pic) {
               var newPic = Item.picture(pic),
@@ -321,12 +395,11 @@ angular.module('myApp.controllers', []).
     }];
     */
     $scope.ifLoad = function (i, j) {
-      console.log(i, j);
       return $scope.items[i].pictures[j].loaded?'loaded':'';
     };
     
   }]).
-  controller('UploadCtrl', ['$scope', '$http', 'ModManager', 'Item', '$q', function ($scope, $http, ModManager, Item, $q) {
+  controller('UploadCtrl', ['$scope', '$http', 'ModManager', 'Item', '$q', 'Util', function ($scope, $http, ModManager, Item, $q, Util) {
     // init && clean up
     ModManager.addListener('before', function (mod) {
       if (mod === 'upload' ) {
@@ -360,6 +433,23 @@ angular.module('myApp.controllers', []).
       }
       var input = ev.target.getElementsByTagName('input')[0] || ev.target.getElementsByTagName('textarea')[0];
       input.focus();
+    });
+
+    var picker;
+    $('.item-box').delegate('.it-post-date', 'focus', function (ev) {
+      var input = ev.target;
+      input.blur();
+      if (picker) return;
+      picker = Util.getDatePicker(null, function (date) {
+        picker.parentElement.removeChild(picker);
+        picker = null;
+        input.dataset.date = date.getTime();
+        input.value = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
+        $scope.items[getItemOrder(input)].date = input.value;
+        $scope.$digest();
+      });
+      picker.className = 'date-picker';
+      document.body.appendChild(picker);
     });
 
     var set = false;
@@ -406,11 +496,23 @@ angular.module('myApp.controllers', []).
       $scope.items.push(Item.one());
     };
 
-    function testExif(f) {
+    function testExif(f, e) {
       EXIF.getData(f, function () {
-        var latitude = EXIF.getTag(this, 'GPSLatitude');
+        var latitude = EXIF.getTag(this, 'GPSLatitude'),
+            date = EXIF.getTag(this, 'DateTimeOriginal');
 
-        console.log(EXIF.getTag(this, 'GPSLatitude'), EXIF.getTag(this, 'GPSLongitude'));
+        if (date) {
+          var arr = date.split(':');
+          date = new Date();
+          date.setFullYear(arr[0]);
+          date.setMonth(arr[1] - 1);
+          date.setDate(arr[2].split(' ')[0]);
+          while (e.tagName !== 'LI') e = e.parentNode;
+          var input = e.getElementsByClassName('it-post-date')[0];
+          input.dataset.date = date;
+          input.value = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + (date.getDate());
+          $scope.items[e.dataset.itemNo].date = input.value;
+        }
       });
     }
     // 注册drop
@@ -425,7 +527,7 @@ angular.module('myApp.controllers', []).
           $scope.$digest();
         }
         fr.readAsDataURL(files[i]);
-        testExif(files[i]);
+        testExif(files[i], ev.target);
       }
       document.body.classList.remove('dragenter');
       set = false;
@@ -512,7 +614,9 @@ angular.module('myApp.controllers', []).
             url: 'item/create',
             data: {
               markId: markId,
-              post: $scope.items[_i].post
+              date: new Date($scope.items[_i].date).getTime(),
+              post: $scope.items[_i].post,
+              title: $scope.items[_i].title
             }
           }).
           success(function (data) {

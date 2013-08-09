@@ -24,24 +24,27 @@ angular.module('myApp', ['myApp.filters', 'myApp.services', 'myApp.directives', 
       }
 
       ModManager.enter("signIn");
-    }, -1);
-    HashManager.addListener("upload", function () {
+    }, -1).
+    addListener("upload", function () {
       ModManager.enter("upload");
-    });
-    HashManager.addListener("back", function () {
+    }).
+    addListener("back", function () {
       HashManager.slience();
       history.back();
-    });
-    HashManager.addListener('home', function () {
+    }).
+    addListener('home', function () {
       ModManager.enter('home');
-    });
-    HashManager.addListener('home/:refresh', function () {
+    }).
+    addListener('home/:refresh', function () {
       ModManager.enter('home');
-    });
-    HashManager.addListener('detail/:id', function (args) {
+    }).
+    addListener('detail/:id', function (args) {
       ModManager.enter('detail');
+    }).
+    addListener('explore', function () {
+      ModManager.enter('explore');
     });
-
+    
     ModManager.addListener('start', function (mod) {
       // auth required
       if ((mod === 'upload' || mod === 'home') && !User.email) {
@@ -51,8 +54,14 @@ angular.module('myApp', ['myApp.filters', 'myApp.services', 'myApp.directives', 
 
       // 导航条按钮底色控制
       document.getElementById('nav-btn-home').classList.remove('active');
+      document.getElementById('nav-btn-explore').classList.remove('active');
+      $('.icon-white').removeClass('icon-white');
       if (mod === 'home') {
         document.getElementById('nav-btn-home').classList.add('active');
+        document.querySelector('#nav-btn-home i').classList.add('icon-white');
+      } else if (mod === 'explore') {
+        document.getElementById('nav-btn-explore').classList.add('active');
+        document.querySelector('#nav-btn-explore i').classList.add('icon-white');
       }
     });
 

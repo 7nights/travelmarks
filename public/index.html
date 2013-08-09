@@ -14,15 +14,15 @@
 </head>
 <body>
   <div class="nav" ng-controller="NavCtrl">
-    <div class="logo left"><img src="img/logo-small-rotate.png" height="28px" /></div>
+    <div class="logo left">Travel Marks</div>
     <div class="nav-a left">
-      <a href="#home">Explore</a>
-      <a href="#home/refresh" id="nav-btn-home" class="active">Marks</a>
+      <a href="#explore" id="nav-btn-explore"><i class="icon-globe"></i> Explore</a>
+      <a href="#home/refresh" id="nav-btn-home" class="active"><i class="icon-map-marker icon-white"></i>Marks</a>
     </div>
     <div class="nav-buttons right">
       <div ng-show="email" >
         <div class="username" ng-bind-template="{{email}}"></div>
-        <div class="btn-signout"><a ng-href="{{signout}}">[Sign Out]</a></div>
+        <div class="btn-signout"><a ng-href="{{signout}}"><i class="icon-cog"></i></a></div>
         <div class="avatar"><img ng-src="{{avatar}}" /></div>
       </div>
     </div>
@@ -59,8 +59,8 @@
     </div>
   </section><!-- /#mod-signIn -->
   <section class="mod" id="mod-home" ng-controller="HomeCtrl">
-    <div class="container wrap-padding">
-      <div class="mod-nav">
+    <div class="mod-nav">
+      <div class="container wrap-padding">
         <div class="head left">My Marks</div>
 
         <div class="buttons">
@@ -78,10 +78,13 @@
         <div class="desc left"><span class="big-num" ng-bind-template="{{totalMarks}}">0</span> marks and <span class="big-num" ng-bind-template="{{totalPictures}}">0</span> pictures.</div>
         <div class="clear"></div>
       </div>
+    </div>
+    <div class="container wrap-padding">
+      
       <div class="mark-empty" ng-show="marks.length <= 0">
         :( Oops, there is so lonely. Upload some pictures!
       </div>
-      <div class="marks-map" ng-show="!demoDisplay" ng-click="demoDisplay = true">
+      <div class="marks-map" ng-show="0 && !demoDisplay" ng-click="demoDisplay = true">
         <div class="map-area"></div>
         <div class="map-pin" style="top: 125px; left: 135px">
           <div class="pictures-container" style="left: -65px;">
@@ -162,6 +165,8 @@
               </div>
               <div class="clear"></div>
             </div>
+            <input class='it-post-title' placeholder='Title' ng-model='it.title' />
+            <input class='it-post-date' placeholder='Date' ng-model='it.date' />
             <div class='it-post-box'><textarea auto-height-textarea ng-model='it.post' class='it-post' placeholder='This is...' ></textarea></div>
           </li>
         </ul>
@@ -199,7 +204,10 @@
         <br />
         <ul class="item-box" ng-class="getMode()">
           <li ng-repeat="it in items">
-            <div class="item-date" ng-bind-template="- {{dateFilter(it.date, 1)}} -"></div>
+            <div class="item-date">
+              - <span class="bigger" ng-bind-template="{{dateFilter(it.date, 1)}}"></span> - 
+              <span ng-bind-template=" {{it.title}}"></span>
+            </div>
             <div ng-repeat="pic in it.pictures" ng-class="ifLoad($parent.$index, $index)" class="it-pic-container">
               <img ng-src="{{pic.src}}" />
             </div>
@@ -209,6 +217,38 @@
       </div>
     </div>
   </section><!-- /$mod-detail -->
+
+  <section class="mod" id="mod-explore" ng-controller="ExploreCtrl">
+    <div class="mod-nav">
+      <div class="container wrap-padding">
+        <div class="head left">Explore</div>
+        <div class="modes">
+          <span class="href active">Latest</span>
+          <span class="sprt">|</span>
+          <span class="href">Popular</span>
+          <span class="sprt">|</span> 
+          <span class="href">World Map</span>
+          <span class="sprt">|</span>
+          <span class="href">Trends</span>
+        </div>
+        <div class="buttons">
+          <span ng-click="switchMode()" class="switch-mode"></span>
+        </div>
+      </div>
+    </div>
+    <ul class="explore-container container">
+      <li ng-repeat="it in marks" class="explore-mark" data-item-no="{{$index}}" ng-click="goDetail($event)">
+        <div class="img-wrap">
+          <div class="img-inner-wrap"><img ng-show="it.cover" ng-src="{{it.cover}}" /></div>
+        </div>
+        <div class="desc-wrap"><div class="desc">
+          <span class="right"><span class="light">marked by </span><img class="mark-avatar" ng-src="{{getAvatar(it.author_avatar)}}" /><strong ng-bind-template="{{it.author_name}}"></strong></span>
+          <strong class="mark-location" ng-bind-template="{{it.location}}"></strong>
+          <div ng-bind-template="{{it.summary}}"></div>
+        </div>
+      </li>
+    </ul>
+  </section>
 
   <!-- In production use:
   <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>

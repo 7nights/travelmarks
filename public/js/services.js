@@ -98,6 +98,7 @@ angular.module('HashManager', []).provider('HashManager', function(){
       }
     }
     if(!flag) listeners.push(obj);
+    return this;
   };
   this.other = function(fn){
     other = fn;
@@ -115,6 +116,7 @@ angular.module('HashManager', []).provider('HashManager', function(){
        */
       addListener: function(a, b, c){
         self.addListener(a, b, c);
+        return this;
       },
       /**
        * 获取当前地址中的参数(地址必须先注册), 例如注册地址"article/:articleId", 在访问
@@ -263,8 +265,103 @@ angular.module('myApp.services', ['ng', 'HashManager']).
       };
     }();
 
+    var getDatePicker = function (d, callback) {
+      var container = document.createElement('div'),
+            title = document.createElement('div');
+      if(!d){
+        d = new Date();
+      }
+      function _getPickerTable(d) {
+        if(!d){
+        d = new Date();
+        }
+        var now = d,
+            year = now.getFullYear(),
+            month = now.getMonth(),
+            day = now.getDay(),
+            date = now.getDate(),
+            daysAbbr = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+            dateLength = [31, (year%4===0?29:((year%100===0&&year%400===0)?29:28)), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
+            table,
+            firstDay = new Date(year, month, 1).getDay(),
+            nowDay = firstDay,
+            nowTr = document.createElement("tr"),
+            TODAY_CLASS = "cal-today",
+            TITLE_CLASS = 'cal-title',
+            FIRST_LINE_CLASS = "cal-first-line";
+            
+        title.className = TITLE_CLASS;
+        title.innerHTML = title.innerHTML = '<span class="cal-btn"><i data-pre="true" class="icon-chevron-left icon-white"></i></span><span class="cal-title-text">' + d.getFullYear() + ', ' + (d.getMonth() + 1) + '</span><span class="cal-btn"><i data-next="true" class="icon-chevron-right icon-white"></i></span>';
+        table = document.createElement("table");
+        nowTr.className = "cal-firstTr";
+        for(var i = 0; i < 7; i++){ // 日历标题
+          nowTr.innerHTML += "<th class='"+FIRST_LINE_CLASS+"'>" + daysAbbr[i] + "</th>";
+        }
+        table.appendChild(nowTr);
+        nowTr = document.createElement("tr");
+        for(var i = 0; i < nowDay; i++){ // 日历第一行前面空格
+          nowTr.innerHTML += "<td></td>";
+        }
+        for(var i = 1, length = dateLength[month]; i <= length; i++){ // 日历剩下部分
+          if( i === date && d.getMonth() === new Date().getMonth() ){
+            nowTr.innerHTML += "<td class='" + TODAY_CLASS + "'>" + i + "</td>";
+          } else {
+            nowTr.innerHTML += "<td>" + i + "</td>";
+          }
+          if(nowDay === 6){
+            nowDay = 0;
+            table.appendChild(nowTr);
+            nowTr = document.createElement("tr");
+            continue;
+          }
+          nowDay++;
+        }
+        if (nowDay !== 0) {
+          for(var i = nowDay; i <= 6; i++){
+            nowTr.innerHTML += "<td></td>";
+          }
+        }
+        table.appendChild(nowTr);
+        return table;
+      }
+
+      title.addEventListener('click', function (ev) {
+        var i = ev.target;
+        if (i.tagName !== 'I' && i.className !== 'cal-btn') return;
+        i.className === 'cal-btn' && (i = i.childNodes[0]);
+        if (i.dataset.pre == 'true') {
+          d.setMonth(d.getMonth() - 1);
+        } else {
+          d.setMonth(d.getMonth() + 1);
+        }
+        var t = container.getElementsByTagName('TABLE')[0];
+        t.parentElement.removeChild(t);
+        t = _getPickerTable(d);
+        bindClickEvent(t);
+        container.appendChild(t);
+        title.getElementsByClassName('cal-title-text')[0].innerHTML = d.getFullYear() + ', ' + (d.getMonth() + 1);
+      }, false);
+      
+      function bindClickEvent(t) {
+        t.addEventListener('click', function (ev) {
+          var td = ev.target;
+          if (td.tagName !== 'TD') return;
+          if (td.innerHTML === '') return;
+
+          callback(new Date(d.setDate(+td.innerHTML)));
+        }, false);
+      }
+
+      var table = _getPickerTable(d);
+      bindClickEvent(table);
+      container.appendChild(title);
+      container.appendChild(table);
+      return container;
+    };
+
     var exports = {
-      notice: notice
+      notice: notice,
+      getDatePicker: getDatePicker
     };
     this.$get = function(){
       return exports;
@@ -295,7 +392,7 @@ angular.module('myApp.services', ['ng', 'HashManager']).
   }).
   provider('ModManager', ['HashManagerProvider', function ModManager(HashManager) {
     var currentMod = null,
-    DEFAULT_ANIMATION = function (leaving, coming, next) {
+    DEFAULT_ANIMATION = function (leaving, coming, unload, after) {
 
       var l_ele = document.getElementById("mod-" + leaving),
       c_ele = document.getElementById("mod-" + coming);
@@ -321,7 +418,8 @@ angular.module('myApp.services', ['ng', 'HashManager']).
         setTimeout(function () {
           $('#mod-' + coming).css({'-webkit-transform': 'translateX(0px)', opacity: 1});
         }, 0);
-        setTimeout(function () {next();}, 300);
+        unload();
+        setTimeout(function () {after();}, 300);
         
       }, 300);
     };
@@ -403,9 +501,10 @@ angular.module('myApp.services', ['ng', 'HashManager']).
           return;
         }
         //document.body.style.overflow = "hidden";
-        animation(currentMod, mod, function(){
-          doListeners("after", mod);
+        animation(currentMod, mod, function () {
           doListeners("unload", currentMod);
+        }, function(){
+          doListeners("after", mod);
           document.body.style.overflow = "auto";
           currentMod = mod;
           switching = false;

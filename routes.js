@@ -15,6 +15,7 @@ module.exports = function (app) {
   app.post('/mark/create', auth, mark.createMark);
   app.get('/mark/get', auth, mark.getMarks);
   app.get('/mark/getMark', mark.getMark);
+  app.get('/mark/explore', mark.exploreMarks);
 
   // Item
   app.post('/item/create', auth, mark.createItem);

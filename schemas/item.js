@@ -5,6 +5,7 @@ var mongoose = require('mongoose'),
 var ItemSchema = new Schema({
   markId: {type: ObjectId, index: true},
   author: {type: ObjectId},
+  title: String,
   post: String,
   date: {type: Date, default: Date.now},
   pictures: {type: [String]}
