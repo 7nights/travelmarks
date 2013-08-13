@@ -4,15 +4,12 @@ var Mark = require('../schemas').Mark,
 /**
  * 创建一个mark
  */
-exports.create = function (title, summary, date, author, latitude, longtitude, position, callback){
+exports.create = function (title, summary, date, author, callback){
   var mark = new Mark;
   mark.title = title;
   mark.summary = summary;
   mark.date = date;
   mark.author = author;
-  mark.latitude = latitude;
-  mark.longtitude = longtitude;
-  mark.location = position;
   mark.save(callback);
 };
 
@@ -46,4 +43,8 @@ exports.countMarksByAuthor = function (id, callback) {
 
 exports.getMarkById = function (id, callback) {
   Mark.findOne({_id: id}, callback);
+};
+
+exports.removeMarkById = function (id, callback) {
+  Mark.remove({_id: id}, callback);
 };

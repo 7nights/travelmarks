@@ -85,6 +85,7 @@ exports.signIn = function (req, res, next) {
 
     req.session.user = user;
     res.cookie('userinfo', JSON.stringify({
+      id: user._id,
       name: user.name,
       email: user.email,
       _csrf: req.session._csrf

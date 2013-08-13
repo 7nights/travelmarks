@@ -40,7 +40,8 @@ app.configure(function () {
       res.cookie('userinfo', JSON.stringify({
         name: req.session.user.name,
         email: req.session.user.email,
-        _csrf: req.session._csrf
+        _csrf: req.session._csrf,
+        id: req.session.user._id
       }));
     }
     next();

@@ -242,8 +242,9 @@ angular.module('myApp.controllers', []).
       location.hash = "detail/" + id;
     };
   }]).
-  controller('DetailCtrl', ['$scope', '$http', 'HashManager', 'ModManager', function ($scope, $http, HashManager, ModManager) {
-    
+  controller('DetailCtrl', ['$scope', '$http', 'HashManager', 'ModManager', 'User', function ($scope, $http, HashManager, ModManager, User) {
+    var lastData;
+
     ModManager.addListener('before', function (mod) {
       mode2rows = false;
       if (msry) {
@@ -296,6 +297,7 @@ angular.module('myApp.controllers', []).
       }).
       success(function (data) {
         if (data.status !== -1) {
+          lastData = data;
           $scope.title = data.title;
           $scope.location = data.location;
           $scope.read = data.read;
@@ -303,6 +305,11 @@ angular.module('myApp.controllers', []).
           $scope.summary = data.summary;
           $scope.total = data.total;
           $scope.date = data.date;
+          if ($scope.author === User.name) {
+            $scope.editable = true;
+          } else {
+            $scope.editable = false;
+          }
           
           // parse data.items
           $scope.items = [];
@@ -311,6 +318,7 @@ angular.module('myApp.controllers', []).
             it.post = val.post;
             it.title = val.title;
             it.date = val.date;
+            it.tag = val.tag;
             val.pictures.forEach(function (pic) {
               var newPic = Item.picture(pic),
                   img = new Image();
@@ -336,7 +344,11 @@ angular.module('myApp.controllers', []).
         }
       });
     });
-  
+    
+    $scope.edit = function () {
+      ModManager.setData(lastData);
+      location.hash = 'upload/edit';
+    };
     $scope.wordWrap = function (val) {
       return val;
       //return val.replace(/\n/g, '<br />');
@@ -399,13 +411,75 @@ angular.module('myApp.controllers', []).
     };
     
   }]).
-  controller('UploadCtrl', ['$scope', '$http', 'ModManager', 'Item', '$q', 'Util', function ($scope, $http, ModManager, Item, $q, Util) {
+  controller('UploadCtrl', ['$scope', '$http', 'ModManager', 'Item', '$q', 'Util', 'HashManager', function ($scope, $http, ModManager, Item, $q, Util, HashManager) {
     // init && clean up
+    var req = new google.maps.places.PlacesService(document.createElement('div')),
+        cachedData;
+    //var req = new google.maps.places.AutoCompleteService();
     ModManager.addListener('before', function (mod) {
       if (mod === 'upload' ) {
-        $('#upload-title-input').focus();
-        document.getElementById('upload-title-input').focus();
+        $scope.editMode = false;
+        $scope.title = '';
+        $scope.summary = '';
+        $scope.locTags = [];
+        $scope.items = Item.empty();
       }
+      if (HashManager.getArgs().edit === 'edit'){
+        $scope.editMode = true;
+        var m = ModManager.getData();
+        if (!m) return history.back();
+        cachedData = m;
+        ModManager.setData(null);
+        $scope.title = m.title;
+        $scope.author = m.author;
+        $scope.summary = m.summary;
+        $scope.locTags = [];
+        var added = [];
+        m.items.forEach(function (val) {
+          var tag = val.tag;
+          if (tag._id in added) return;
+          added[tag._id] = true;
+          val.addr = tag.addr || 'loading...';
+          val.pos = val.addr;
+          $scope.locTags.push({
+            name: tag.name,
+            geometry: {
+              lat: tag.lat,
+              lng: tag.lng
+            },
+            pos: tag.addr || 'loading...',
+            results: [{
+              formatted_address: tag.addr || tag.name,
+              geometry: {
+                location: {
+                  lat: function () {
+                    return this.geometry.lat;
+                  },
+                  lng: function () {
+                    return this.geometry.lng;
+                  }
+                }
+              }
+            }],
+            activeTag: 0
+          });
+          var i = $scope.locTags.length - 1;
+          if (!val.addr) {
+            req.nearbySearch({
+              location: new google.maps.LatLng(tag.lat, tag.lng),
+              radius: 5
+            }, function (arr) {
+              $scope.locTags[i].pos = arr[0].vicinity;
+            });
+          } else {
+            $scope.locTags[i].pos = val.addr;
+          }
+
+        });
+        $scope.items = m.items;
+        $scope.$digest();
+      }
+      $scope.$digest();
     });
     ModManager.addListener('after', function (mod) {
       if (mod === 'upload' ) {
@@ -420,6 +494,202 @@ angular.module('myApp.controllers', []).
       }
     });
 
+
+    // location tag selector
+    var ltsScope,
+        lts_ce;
+
+    // location input
+    var lsScope,
+        clonedElement,
+        preventReload = true;
+    angular.injector(['ng']).invoke(['$rootScope', '$compile', function ($rootScope, $compile) {
+      lsScope = $rootScope.$new();
+      ltsScope = $scope.$new();
+      lsScope.deleteTag = function () {
+        var uid = $scope.locTags[lsScope.order].uid;
+        $('#mod-upload .item-box li').each(function (i, val) {
+          if ($scope.items[i].tag && $scope.items[i].tag.uid === uid) {
+            $scope.items[i].tag = null;
+          }
+        });
+        $scope.locTags.splice(lsScope.order, 1);
+        $scope.$digest();
+        lsScope.show = false;
+      };
+      var e = angular.element('<div ng-show="show" class="upload-location-selector"><div class="selector-nav"><span class="selector-result"><i class="icon-white icon-map-marker"></i><span ng-bind-template="{{result}}" class="result-text"></span></span></div><div class="input-wrap"><input ng-model="inputName" type="text" class="selector-input-name" /></div><div class="input-wrap"><input type="text" class="selector-input-pos" ng-model="inputPos" /></div><div class="selector-results"><div class="results-item" ng-repeat="it in results" data-item-order="{{$index}}" ng-bind-template="{{it.formatted_address}}"></div><div class="results-footer" ><div ng-click="deleteTag()" class="delete">Delete this tag</div><div class="results-num" ng-bind-template="{{results.length}} result(s)"></div><div class="clear"></div></div></div></div>');
+      clonedElement = $compile(e)(lsScope, function (clonedElement, scope) {
+        document.body.appendChild(clonedElement[0]);
+        var list = document.getElementsByClassName('selector-results')[0];
+        list.addEventListener('click', function (ev) {
+          if (!ev.target.classList.contains('results-item')) return;
+          var order = +ev.target.dataset.itemOrder;
+          $scope.locTags[lsScope.order].pos = lsScope.results[order]['formatted_address'];
+          $scope.locTags[lsScope.order].results = lsScope.results;
+          $scope.locTags[lsScope.order].activeTag = order;
+          lsScope.show = false;
+
+          $scope.$digest();
+          lsScope.$digest();
+          ev.stopPropagation();
+        });
+        var junk = document.createElement('div');
+        var req = new google.maps.places.PlacesService(junk);
+        var throttle_t,
+            throttle_count,
+            THROTTLE_CD = 300;
+
+        lsScope.$watch('inputName', function (newVal, oldVal) {
+          if (!$scope.locTags) return;
+          $scope.locTags[lsScope.order].name = newVal;
+          $scope.$digest();
+        });
+        lsScope.$watch('inputPos', function (newVal, oldVal) {
+
+          if (oldVal === undefined) return;
+          if (preventReload) return preventReload = false;
+          if (!newVal) return;
+          
+          function sendRequest() {
+            if (!lsScope.inputPos) return;
+            req.textSearch({
+              query: lsScope.inputPos
+            }, function (arr) {
+              lsScope.results = arr;
+              try{
+                lsScope.$digest();
+              } catch(e) {}
+            });
+          }
+          
+          if (throttle_t) {
+            return throttle_count = THROTTLE_CD;
+          } else {
+            throttle_count = THROTTLE_CD;
+            throttle_t = setInterval(function () {
+              throttle_count -= 20;
+              if (throttle_count <= 0) {
+                clearInterval(throttle_t);
+                throttle_t = null;
+                sendRequest();
+              }
+            }, 20);
+          }
+          sendRequest();
+
+        });
+      });
+
+      // lts
+      ltsScope.show = false;
+      e = angular.element("<div ng-show='show' class='tag-selector'><div ng-repeat='tag in locTags' class='tag' data-item-order='{{$index}}' ng-bind-template='{{tag.name}}'></div></div>");
+      lts_ce = $compile(e)(ltsScope, function (lts_ce, scope) {
+        document.body.appendChild(lts_ce[0]);
+        $(lts_ce[0]).delegate('.tag', 'click', function (ev) {
+          console.log(this);
+          if (!this.classList.contains('tag')) {
+            return;
+          }
+          var item_order = getItemOrder(ltsScope.currentTarget),
+              order = ev.target.dataset.itemOrder;
+
+          ltsScope.show = false;
+          $scope.items[item_order].tag = $scope.locTags[order];
+          $scope.$digest();
+        });
+      });
+    }]);
+
+    lsScope.show = false;
+    lsScope.$digest();
+    $scope.locTags = [];
+    $('#upload-location-input').bind('keydown', function (ev) {
+      if (ev.keyCode === 13) {
+        $scope.locTags.push({
+          name: ev.target.value,
+          pos: 'loading...',
+          uid: parseInt(Math.random() * 10000) + parseInt(Math.random() * 10000)
+        });
+        $scope.$digest();
+        var i = $scope.locTags.length - 1,
+            val = ev.target.value;
+        var req = new google.maps.places.PlacesService(document.createElement('div'));
+        
+        ev.target.value = '';
+        req.textSearch({
+          query: val
+        }, function (arr) {
+          if (arr.length === 0) {
+            $scope.locTags.splice(i, 1);
+            return alert("not found");
+          }
+          $scope.locTags[i].results = arr;
+          $scope.locTags[i].activeTag = 0;
+          $scope.locTags[i].pos = arr[0]['formatted_address'];
+
+          var list = $('#mod-upload .item-box li');
+          for (var j = list.length; j--; ){
+            if (!$scope.items[j].tag) {
+              $scope.items[j].tag =  $scope.locTags[$scope.locTags.length - 1];
+            }
+          }
+
+          $scope.$digest();
+        });
+      }
+    });
+    var lastClickedTag;
+    $('#mod-upload .item-box').delegate('.item-tag', 'click', function (ev) {
+
+      if (lastClickedTag === ev.target && ltsScope.show) {
+        ltsScope.show = false;
+        return ltsScope.$digest();
+      }
+      lastClickedTag = ev.target;
+      ltsScope.currentTarget = ev.target;
+
+      ltsScope.show = true;
+      var bounds = ev.target.getBoundingClientRect();
+      ltsScope.$digest();
+      lts_ce[0].style.top = bounds.bottom + "px";
+      lts_ce[0].style.left = bounds.right - lts_ce[0].offsetWidth + "px";
+    });
+    $('.location-tags-container').delegate('.location-tag', 'click', function (ev) {
+      preventReload = true;
+      while(! ('itemOrder' in ev.target.dataset)) ev.target = ev.target.parentNode;
+      var e = ev.target,
+          selector = document.getElementsByClassName('upload-location-selector')[0];
+      var order = +e.dataset.itemOrder;
+      lsScope.show = true;
+      lsScope.result = $scope.locTags[order].name + ' - ' + $scope.locTags[order].pos;
+      lsScope.inputName = $scope.locTags[order].name;
+      lsScope.inputPos = $scope.locTags[order].pos;
+      lsScope.results = $scope.locTags[order].results;
+      lsScope.order = order;
+      lsScope.$digest();
+      var bounds = e.getBoundingClientRect();
+      clonedElement[0].style.top = bounds.top - 9 + "px";
+      clonedElement[0].style.left = bounds.left - 22 + "px";
+      ev.stopPropagation();
+
+      $(document).one('click', function temp(ev) {
+        if (!lsScope.show) return;
+        var e = ev.target;
+        while(e && e.classList) {
+          if (e.classList.contains('upload-location-selector')) {
+            if (lsScope.show) {
+              $(document).one('click', temp);
+            }
+            return;
+          }
+          e = e.parentNode;
+        }
+        lsScope.show = false;
+        lsScope.$digest();
+      });
+    });
+
+
     // focus
     $('#mod-upload .item').delegate('input, textarea', 'focus', function (ev) {
       ev.target.parentElement.classList.add('focus');
@@ -431,7 +701,7 @@ angular.module('myApp.controllers', []).
       if (!$(ev.target).hasClass('item')) {
         ev.target = ev.target.parentElement;
       }
-      var input = ev.target.getElementsByTagName('input')[0] || ev.target.getElementsByTagName('textarea')[0];
+      var input = ev.target.getElementsByTagName('input')[0] || ev.target.getElementsByTagName('textarea')[0] || ev.target.parentNode.parentNode.getElementsByTagName('input')[0];
       input.focus();
     });
 
@@ -494,6 +764,8 @@ angular.module('myApp.controllers', []).
     $scope.items = Item.empty();
     $scope.addMore = function () {
       $scope.items.push(Item.one());
+      // 新创建的item从最后一个tag中继承tag
+      $scope.items[$scope.items.length - 1].tag = $scope.locTags[$scope.locTags.length - 1];
     };
 
     function testExif(f, e) {
@@ -554,36 +826,60 @@ angular.module('myApp.controllers', []).
       }
       return 220 + 'px';
     };
+    $scope.getModTitle = function () {
+      if ($scope.editMode) {
+        return 'Editing Mark';
+      }
+      return 'Create a Mark!';
+    };
 
 
     $scope.uploading = false; // 是否处于上传中, 用来已经开始上传任务后disable按钮
     $scope.ifUploading = function () {
-      $scope.uploading ? 'disable-buttons' : '';
+      return $scope.uploading ? 'disable-buttons' : '';
     };
     $scope.demoUploadFinished = 0;
     // save 按钮
     $scope.save = function () {
       if ($scope.uploading) return;
       $scope.uploading = true;
+
+      // edit mode
+      if ($scope.editMode) {
+        
+        return $scope.$digest();
+      }
+
       $('.upload-pictures').addClass('uploading');
+
+      // TODO: 验证
+      var pass = true;
+      $scope.items.forEach(function (val, i) {
+        if (!val.tag) {
+          // friendly alert
+          alert('You need to select a location tag for each site.');
+          pass = false;
+        }
+      });
+
+      if (!pass) {
+        $scope.uploading = false;
+        return;
+      }
       
       var sq = new Utils.syncQueue(),
           markId;
+
       sq.
       // step 1: create mark
       push(function (args, next) {
-        console.log(JSON.stringify({
-            title: $scope.title,
-            summary: $scope.summary,
-            location: $scope.location
-          }));
+
         $http({
           method: 'POST',
           url: 'mark/create',
           data: JSON.stringify({
             title: $scope.title,
-            summary: $scope.summary,
-            location: $scope.location
+            summary: $scope.summary
           })
         }).
         success(function (data, status, headers, config) {
@@ -602,13 +898,46 @@ angular.module('myApp.controllers', []).
           alert('Upload failed. Please try again later.');
         });
       });
-      // step 2: create item & upload pictures
+
+      // step 2: create tags
+      function createTag(t) {
+        sq.push(function (args, next) {
+          console.log(t);
+          var tag = {
+            markId: markId,
+            name: t.name,
+            addr: t.pos,
+            lat: t.results[t.activeTag].geometry.location.lat(),
+            lng: t.results[t.activeTag].geometry.location.lng()
+          };
+          $http({
+            method: 'post',
+            url: 'tag/create',
+            data: tag
+          }).
+          success(function (data) {
+            if (data.status === 1) {
+              t.tagId = data.data.tagId;
+              next(null, t.tagId);
+            }
+          }).
+          error(function () {
+            // TODO
+            next(new Error('Upload failed'));
+          });
+        });
+      }
+      $scope.locTags.forEach(function (val, i) {
+        createTag(val);
+      });
+
+      // step 3: create item & upload pictures
       
       function createItem(_i) {
         var itemId;
         // step 2.1: create item
         sq.push(function (args, next) {
-          
+          var tag = $scope.items[_i].tag;
           $http({
             method: 'POST',
             url: 'item/create',
@@ -616,7 +945,8 @@ angular.module('myApp.controllers', []).
               markId: markId,
               date: new Date($scope.items[_i].date).getTime(),
               post: $scope.items[_i].post,
-              title: $scope.items[_i].title
+              title: $scope.items[_i].title,
+              tag: tag.tagId
             }
           }).
           success(function (data) {
@@ -629,7 +959,7 @@ angular.module('myApp.controllers', []).
             next(new Error('Upload failed.'));
           });
         });
-        // step 2.2: upload pictures
+        // step 3.2: upload pictures
         $scope.items[_i].pictures.forEach(function (val, i) {
           uploadPicture(itemId, val, i);
           $scope.demoUploadFinished++;
@@ -698,6 +1028,8 @@ angular.module('myApp.controllers', []).
         }
       }).
       exec();
+
+      $scope.$digest();
     };
 
     // 点击上传图片按钮

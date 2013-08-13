@@ -5,6 +5,7 @@ var User = require('../models').User,
     Mark = require('../models').Mark,
     Item = require('../models').Item,
     Picture = require('../models').Picture,
+    Tag = require('../models').Tag,
     check = require('validator').check,
     sanitize = require('validator').sanitize,
     config = require('../config'),
@@ -22,17 +23,14 @@ exports.createMark = function (req, res, next) {
     return res.json({status: -1, message: '请至少填写标题和摘要'});
   }
   try{
-    var title = sanitize(sanitize(decodeURIComponent(req.body.title)).trim()).xss().substr(0, 60),
-        summary = sanitize(sanitize(decodeURIComponent(req.body.summary)).trim()).xss().substr(0, 3000),
+    var title = sanitize(sanitize(req.body.title).trim()).xss().substr(0, 60),
+        summary = sanitize(sanitize(req.body.summary).trim()).xss().substr(0, 3000),
         date = Date.now(),
-        author = req.session.user._id,
-        latitude = req.body.latitude || '',
-        longtitude = req.body.longtitude || '';
-        position = decodeURIComponent(req.body.location) || '';
+        author = req.session.user._id;
   } catch (e) {
     return res.json({status: -1, message: "非法输入"});
   }
-  Mark.create(title, summary, date, author, latitude, longtitude, position, function(err, mark){
+  Mark.create(title, summary, date, author, function(err, mark){
     if(err) return next(err);
     res.json({status: 1, message: '创建成功', data: {'markId': mark._id}});
   });
@@ -155,7 +153,6 @@ exports.getMark = function (req, res, next) {
   });
   Item.getMarkItems(req.param('id'), function (err, m) {
     if (err) return next(err);
-    if (!m) return res.json({status: -1, message: '没有找到这个mark!'});
     ep.emit('itemsGot', m);
   });
 };
@@ -165,11 +162,16 @@ exports.getMark = function (req, res, next) {
  * @param {ObjectId} req.body.markId 目标mark的id
  */
 exports.createItem = function (req, res, next) {
+  if (!req.body.markId || !req.body.tag) {
+    res.json({status: -1, message: '输入不完整'});
+  }
   try {
     var markId = req.body.markId,
         post = sanitize(req.body.post).xss().substr(0, 8000),
-        title = req.body.title,
-        date = req.body.date;
+        title = sanitize(req.body.title).trim(),
+        date = req.body.date,
+        tag = req.body.tag;
+    
     if (date) {
       date = parseInt(date);
       if (isNaN(date)) throw Error('Invalid Date');
@@ -179,7 +181,7 @@ exports.createItem = function (req, res, next) {
       title = sanitize(title).xss().substr(0, 60);
     }
   } catch(e) {
-    return res.json({status: -1, message: "非法输入"});
+    return res.json({status: -1, message: '非法输入'});
   }
 
   // 验证markId是否存在且为该用户
@@ -190,13 +192,132 @@ exports.createItem = function (req, res, next) {
     if(err) return next(err);
     if(!m || (typeof m === 'array' && m.length === 0)) return res.json({status: -1, message: '没有足够的权限来创建这条景点'});
 
-    Item.createItem(markId, req.session.user._id, title, date, post, function(err, it) {
+    Item.createItem(markId, req.session.user._id, title, tag, date, post, function(err, it) {
       if(err) return next(err);
       return res.json({status: 1, message: '创建成功', data: {itemId: it._id}});
     });
   });
 };
+/**
+ * 删除一个mark
+ * @param {String} req.post.markId
+ */
+exports.deleteMark = function (req, res, next) {
+  var markId = req.body.markId;
+  if (!markId) {
+    return res.json({status: -1, message: '非法请求'});
+  }
+  Mark.removeMarkById(markId, function (err) {
+    if (err) return next(err);
+    res.json({status: 1, message: '删除成功'});
+  });
+};
+/**
+ * 删除一个item
+ * @param {String} req.post.itemId
+ */
+exports.deleteItem = function (req, res, next) {
+  var itemId = req.body.itemId;
+  if (!itemId) {
+    return res.json({status: -1, message: '非法请求'});
+  }
+  Item.removeItemById(itemId, function (err) {
+    if (err) return next(err);
+    res.json({status: 1, message: '删除成功'});
+  });
+};
+/**
+ * 删除图片
+ */
 
+/**
+ * 修改一个mark
+ */
+exports.alterMark = function (req, res, next) {
+  if (!req.body._id) {
+    return res.json({status: -1, message: '非法输入'});
+  }
+  Mark.getMarkById(req.body._id, function (err, m) {
+    if (err) return next(err);
+    if (!m) return res.json({status: -1, message: ''});
+
+    if (req.body.cover) {
+      var cover = sanitize(req.body.cover).xss();
+      m.cover = cover;
+    }
+    if (req.body.title) {
+      var title = sanitize(sanitize(req.body.title).xss()).trim().substr(0, 60);
+      m.title = title;
+    }
+    if (req.body.summary) {
+      var summary = sanitize(sanitize(req.body.title).xss()).trim().substr(0, 3000);
+      m.summary = summary;
+    }
+    m.save(function (err) {
+      if (err) return next(err);
+      return res.json({status: 1, message: '修改成功!'});
+    });
+  });
+};
+
+/**
+ * 修改一个item
+ * @param {String} req.body._id item id
+ * @param {String} req.body.post
+ * @param {Object} req.body.tag
+ * @param {String} req.body.title
+ * @param {Array} req.body.pictures
+ * @param {Number} req.body.date
+ */
+exports.alterItem = function (req, res, next) {
+  if (!req.body._id) {
+    return res.json({status: -1, message: '非法请求'});
+  }
+  Item.getItemById(req.body._id, function (err, it) {
+    if (err) return next(err);
+    if (!it) return res.json({status: -1, message: '此item不存在'});
+
+    if (req.body.post) {
+      var post = sanitize(req.body.post).xss().substr(0, 5000);
+      it.post = post;
+    }
+    if (req.body.tag) {
+      var tag = req.body.tag;
+      tag = {
+        name: tag.name.toString(),
+        lat: parseFloat(tag.lat),
+        lng: parseFloat(tag.lng),
+        addr: tag.addr.toString()
+      };
+      it.tag = tag;
+    }
+    if (req.body.title) {
+      var title = sanitize(sanitize(req.body.title).xss()).trim().substr(0, 60);
+      it.title = title;
+    }
+    if (req.body.pictures && typeof req.body.pictures === 'array') {
+      var oldPictures = it.pictures,
+          pictures = req.body.pictures;
+      // find deleted pictures
+      var deleted = [];
+      oldPictures.forEach(function (val, i) {
+        if (pictures.indexOf(val) === -1) {
+          deleted.push(val);
+        }
+      });
+      it.pictures = pictures;
+      Picture.deletePictures(deleted);
+    }
+    if (req.body.date) {
+      var date = new Date(req.body.date);
+      if (isNaN(date.getTime())) date = new Date();
+      it.date = date;
+    }
+    it.save(function () {
+      res.json({status: 1, message: '修改成功!'});
+    });
+  });
+};
 /**
  * 向item添加图片的请求
  * @param {String} req.body.itemId 目标item id
@@ -248,7 +369,16 @@ exports.savePicture = function (req, res, next) {
     }
     url = url.substr('public/'.length);
 
-    item.pictures.push(url);
+    if(!req.body.insertPos) {
+      item.pictures.push(url);
+    } else {
+      var index = parseInt(req.body.insertPos);
+      if (isNaN(index)) {
+        item.pictures.push(url);
+      } else {
+        item.pictures.splice(index, 0, url);
+      }
+    }
     item.save(function (err, result) {
       if (err) return next(err);
 
@@ -260,8 +390,32 @@ exports.savePicture = function (req, res, next) {
           doc.save();
         }
       });
-      return res.json({status: 1, message: '添加图片成功'});
+      return res.json({status: 1, message: '添加图片成功', data: {url: url}});
     });
   });
 
+};
+/**
+ * 创建一个标签
+ * @param {String} req.body.markId markId
+ * @param {String} req.body.name
+ * @param {String} req.body.addr
+ * @param {Number} req.body.lat
+ * @param {Number} req.body.lng
+ */
+exports.createTag = function (req, res, next) {
+  if (!req.body.markId || !req.body.name || !req.body.addr || !req.body.lat || !req.body.lng) return res.json({status: -1, message: '非法请求'});
+  var markId = req.body.markId,
+      name = sanitize(sanitize(req.body.name).xss()).trim().substr(0, 60),
+      addr = sanitize(sanitize(req.body.addr).xss()).trim().substr(0, 255),
+      lat = parseFloat(req.body.lat),
+      lng = parseFloat(req.body.lng);
+  Mark.getMarkById(markId, function (err, m) {
+    if (err) return next(err);
+    if (!m) return res.json({status: -1, message: '此mark已经不存在'});
+
+    Tag.createTag(markId, name, addr, lat, lng, function (err, tag) {
+      return res.json({status: 1, message: '成功', data: {tagId: tag._id}});
+    });
+  });
 };

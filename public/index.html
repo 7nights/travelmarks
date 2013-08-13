@@ -11,6 +11,8 @@
   <script type="text/javascript" src="lib/exif.js"></script>
   <script type="text/javascript" src="lib/masonry.min.js"></script>
   <script type="text/javascript" src="lib/md5.js"></script>
+  <script type="text/javascript"
+      src="http://maps.googleapis.com/maps/api/js?libraries=places&key=AIzaSyBGqgfRqcpUm3uvfmslJ4qnFv5WBvVoDUs&sensor=false"></script>
 </head>
 <body>
   <div class="nav" ng-controller="NavCtrl">
@@ -131,7 +133,7 @@
     <input type="file" class="upload-input" ng-change="fileChange()" ng-model="inputFile" />
     <div class="wrap-padding">
       <div class="container">
-        <h3>Create a Mark!</h3>
+        <h3 ng-bind-template='{{getModTitle()}}'></h3>
 
         <div class="item first-child">
           <strong>Title</strong>
@@ -139,15 +141,24 @@
         </div>
         <div class="item">
           <strong>Location</strong>
-          <input type="text" ng-model="location" />
+          <input type="text" id="upload-location-input" placeholder='input a place' ng-model="location" />
+          <div class="upload-location-hint">press enter to confirm</div>
+          <div class="location-tags-container">
+            <div class="location-tag" data-item-order="{{$index}}" ng-repeat="tag in locTags">
+              <span class="tag-name" ng-bind-template="{{tag.name}}"></span> - 
+              <span class="tag-pos" ng-bind-template="{{tag.pos}}"></span>
+            </div>
+            <div class="clear"></div>
+          </div>
         </div>
         <div class="item">
           <strong>Summary</strong>
-          <textarea auto-height-textarea  ng-model="summary"></textarea>
+          <textarea auto-height-textarea ng-model="summary"></textarea>
         </div>
         <br />
         <ul class="item-box">
           <li ng-repeat="it in items" data-item-no="{{$index}}">
+            
             <div class="upload-pictures" ng-click="upload($event)">
               <div class="drop-pictures"><span>Drop Pictures Here</span></div>
               <div class="upload-pictures-container">
@@ -157,15 +168,18 @@
                 <div class="upload-pictures-list" data-order="{{$index}}" ng-repeat="pic in it.pictures" ng-hide="it.pictures.length == 0">
                   
                   <div class="upload-gray-wrap">
-                    <img ng-src="{{pic.src}}" />
+                    <img ng-src="{{pic.src || pic}}" />
                   </div>
                   <div class="upload-progress-text">{{pic.progress}}%</div>
-                  <div class="upload-progress" ng-style="{'width': progressWidth(pic)}"><img ng-src="{{pic.src}}" /></div>
+                  <div class="upload-progress" ng-style="{'width': progressWidth(pic)}"><img ng-src="{{pic.src || pic}}" /></div>
                 </div>
               </div>
               <div class="clear"></div>
             </div>
-            <input class='it-post-title' placeholder='Title' ng-model='it.title' />
+            <div class="input-wrapper">
+              <input class='it-post-title' placeholder='Title' ng-model='it.title' />
+              <div class="item-tag" ng-bind-template="{{it.tag.name || 'somewhere'}}"></div>
+            </div>
             <input class='it-post-date' placeholder='Date' ng-model='it.date' />
             <div class='it-post-box'><textarea auto-height-textarea ng-model='it.post' class='it-post' placeholder='This is...' ></textarea></div>
           </li>
@@ -194,6 +208,7 @@
             <div class="location" ng-bind-template="{{location}}"></div>
             <div class="read" ng-bind-template="{{read}}"></div>
             <div class="buttons">
+              <div class="edit" ng-click="edit()" ng-show="editable">✎</div>
               <div class="collect">❤</div>
               <div class="mode" ng-click="switchMode()"></div>
             </div>
@@ -204,7 +219,9 @@
         <br />
         <ul class="item-box" ng-class="getMode()">
           <li ng-repeat="it in items">
+
             <div class="item-date">
+              <div class="item-tag" ng-bind-template="{{it.tag.name}}"></div>
               - <span class="bigger" ng-bind-template="{{dateFilter(it.date, 1)}}"></span> - 
               <span ng-bind-template=" {{it.title}}"></span>
             </div>
@@ -238,14 +255,16 @@
     </div>
     <ul class="explore-container container">
       <li ng-repeat="it in marks" class="explore-mark" data-item-no="{{$index}}" ng-click="goDetail($event)">
+
         <div class="img-wrap">
           <div class="img-inner-wrap"><img ng-show="it.cover" ng-src="{{it.cover}}" /></div>
         </div>
         <div class="desc-wrap"><div class="desc">
           <span class="right"><span class="light">marked by </span><img class="mark-avatar" ng-src="{{getAvatar(it.author_avatar)}}" /><strong ng-bind-template="{{it.author_name}}"></strong></span>
-          <strong class="mark-location" ng-bind-template="{{it.location}}"></strong>
+          <strong class="mark-location" ng-bind-template="{{it.title}}"></strong>
           <div ng-bind-template="{{it.summary}}"></div>
         </div>
+      
       </li>
     </ul>
   </section>

@@ -12,6 +12,7 @@ angular.module('myApp', ['myApp.filters', 'myApp.services', 'myApp.directives', 
       User.name = user.name;
       User.email = user.email;
       User._csrf = user._csrf;
+      User.id = user.id;
       $cookieStore.remove('userinfo');
       User.$digest();
     }
@@ -26,6 +27,9 @@ angular.module('myApp', ['myApp.filters', 'myApp.services', 'myApp.directives', 
       ModManager.enter("signIn");
     }, -1).
     addListener("upload", function () {
+      ModManager.enter("upload");
+    }).
+    addListener("upload/:edit", function () {
       ModManager.enter("upload");
     }).
     addListener("back", function () {
@@ -55,7 +59,7 @@ angular.module('myApp', ['myApp.filters', 'myApp.services', 'myApp.directives', 
       // 导航条按钮底色控制
       document.getElementById('nav-btn-home').classList.remove('active');
       document.getElementById('nav-btn-explore').classList.remove('active');
-      $('.icon-white').removeClass('icon-white');
+      $('.nav .icon-white').removeClass('icon-white');
       if (mod === 'home') {
         document.getElementById('nav-btn-home').classList.add('active');
         document.querySelector('#nav-btn-home i').classList.add('icon-white');

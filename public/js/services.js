@@ -7,7 +7,7 @@ window.Utils = {
         var start = document.cookie.indexOf(key + '=');
         if (start !== -1) {
           start += key.length + 1;
-          var end = document.cookie.indexOf(';', key);
+          var end = document.cookie.indexOf(';', start);
           if (end === -1) end = document.cookie.length;
           return unescape(document.cookie.substr(start, end));
         }
@@ -181,6 +181,7 @@ angular.module('myApp.services', ['ng', 'HashManager']).
         scope.name = user.name;
         scope.email = user.email;
         scope._csrf = user._csrf;
+        scope.id = user.id;
         cookies.remove('userinfo');
         scope.$digest();
 
@@ -520,6 +521,7 @@ angular.module('myApp.services', ['ng', 'HashManager']).
     this.initMod = null;
     this.firstLoad = true;
     this.enter = enter;
+    this.data = null;
     this.$get = function(){
       return {
         /** 
@@ -550,6 +552,12 @@ angular.module('myApp.services', ['ng', 'HashManager']).
         },
         set initMod(val){
           self.initMod = val;
+        },
+        setData: function (data){
+          self.data = data;
+        },
+        getData: function (){
+          return self.data;
         }
       };
     };
