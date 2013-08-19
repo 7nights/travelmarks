@@ -211,6 +211,16 @@ exports.deleteMark = function (req, res, next) {
     if (err) return next(err);
     res.json({status: 1, message: '删除成功'});
   });
+
+  // 删除items
+  Item.getMarkItems(markId, function (err, items) {
+    if (err) return next(err);
+    items.forEach(function (it) {
+      Picture.deletePictures(it.pictures);
+      it.remove();
+    });
+  });
+
 };
 /**
  * 删除一个item
@@ -365,7 +375,10 @@ exports.savePicture = function (req, res, next) {
   ep.once('savetoitem', function (doc) {
     var url;
     if(path.sep === '\\') {
+      // for windows
       url = realPath.replace(/\\/g, '/');
+    } else {
+      url = realPath;
     }
     url = url.substr('public/'.length);
 

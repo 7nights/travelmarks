@@ -10,6 +10,7 @@ angular.module('myApp.controllers', []).
     $scope.errorMessage = '';
     var signupMode = false;
     $scope.signUp = function (ev){
+      if ($scope.submiting) return;
       signupMode = !signupMode;
       if (signupMode) {
         $scope.loginBtn = 'Sign Up';
@@ -27,6 +28,7 @@ angular.module('myApp.controllers', []).
       !!ev && ev.preventDefault();
     };
     $scope.submit = function (ev){
+      if ($scope.submiting) return;
       // check input
       var REG_USERNAME = /^[^_]([a-zA-Z0-9\u4e00-\u9fa5]+_?)+[^_]$/;
       if (signupMode && !REG_USERNAME.test($scope.inputUsername)){
@@ -49,6 +51,8 @@ angular.module('myApp.controllers', []).
       if (!document.getElementById('login-email').validity.valid) {
         return $scope.errorMessage = '请输入正确的电子邮箱'; 
       }
+      $scope.submiting = true;
+      $('#login-btn').css('opacity', '.3');
 
       if (!signupMode) {
         $http({method: 'POST', url: '/signin', data: {
@@ -56,6 +60,8 @@ angular.module('myApp.controllers', []).
           passwd: hex_md5($scope.inputPassword)
         }}).
           success(function (data, status, headers, config) {
+            $scope.submiting = false;
+            $('#login-btn').css('opacity', '1');
             // TODO
             if (data.status === 1) {
               if(User.eatCookie()){
@@ -67,6 +73,8 @@ angular.module('myApp.controllers', []).
             }
           }).
           error(function () {
+            $scope.submiting = false;
+            $('#login-btn').css('opacity', '1');
             // TODO
             window.location.hash = "";
           });
@@ -78,6 +86,7 @@ angular.module('myApp.controllers', []).
           repasswd: hex_md5($scope.inputRepassword)
         }}).
           success(function (data, status, headers, config) {
+            $scope.submiting = false;
             if (data.status === 1) {
               $scope.errorMessage = '创建成功~';
               $scope.inputPassword = '';
@@ -89,6 +98,7 @@ angular.module('myApp.controllers', []).
           }).
           error(function () {
             // TODO
+            $scope.submiting = false;
           });
       }
 
@@ -298,6 +308,7 @@ angular.module('myApp.controllers', []).
       success(function (data) {
         if (data.status !== -1) {
           lastData = data;
+          $scope.id = HashManager.getArgs().id;
           $scope.title = data.title;
           $scope.location = data.location;
           $scope.read = data.read;
@@ -346,8 +357,31 @@ angular.module('myApp.controllers', []).
     });
     
     $scope.edit = function () {
+      return alert('编辑功能有待working……');
       ModManager.setData(lastData);
       location.hash = 'upload/edit';
+    };
+    $scope.remove = function () {
+      var ensure = prompt('Do you really want to delete this mark? Enter DELETE to continue.');
+      if (ensure === 'DELETE') {
+        var markId = $scope.id;
+        $http({
+          method: 'post',
+          url: '/mark/delete',
+          data: {
+            markId: markId,
+            _csrf: User._csrf
+          }
+        }).
+        success(function (data) {
+          if (data.status === 1) {
+            return location.hash = "home/refresh";
+          }
+        }).
+        error(function () {
+          // TODO
+        });
+      }
     };
     $scope.wordWrap = function (val) {
       return val;
@@ -605,6 +639,7 @@ angular.module('myApp.controllers', []).
     $scope.locTags = [];
     $('#upload-location-input').bind('keydown', function (ev) {
       if (ev.keyCode === 13) {
+        if ($.trim(ev.target.value) === '') return;
         $scope.locTags.push({
           name: ev.target.value,
           pos: 'loading...',
@@ -649,7 +684,9 @@ angular.module('myApp.controllers', []).
       ltsScope.currentTarget = ev.target;
 
       ltsScope.show = true;
-      var bounds = ev.target.getBoundingClientRect();
+      var bounds = $(ev.target).offset();
+      bounds.bottom = bounds.top + ev.target.offsetHeight;
+      bounds.right = bounds.left + ev.target.offsetWidth;
       ltsScope.$digest();
       lts_ce[0].style.top = bounds.bottom + "px";
       lts_ce[0].style.left = bounds.right - lts_ce[0].offsetWidth + "px";
@@ -667,7 +704,7 @@ angular.module('myApp.controllers', []).
       lsScope.results = $scope.locTags[order].results;
       lsScope.order = order;
       lsScope.$digest();
-      var bounds = e.getBoundingClientRect();
+      var bounds = $(e).offset();
       clonedElement[0].style.top = bounds.top - 9 + "px";
       clonedElement[0].style.left = bounds.left - 22 + "px";
       ev.stopPropagation();
@@ -792,14 +829,37 @@ angular.module('myApp.controllers', []).
       var files = ev.originalEvent.dataTransfer.files;
       for(var i = 0, length = files.length; i < length; i++ ) {
         if (files[i].type.indexOf('image') === -1) continue;
-        var fr = new FileReader();
+        ev.preventDefault();
+        /*var fr = new FileReader();
         fr._file = files[i];
         fr.onload = function () {
           $scope.items[getItemOrder(ev.target)].pictures.push(Item.picture(this.result, this._file));
           $scope.$digest();
-        }
-        fr.readAsDataURL(files[i]);
-        testExif(files[i], ev.target);
+        };
+        fr.readAsDataURL(files[i]);*/
+        var worker = new Worker('js/worker-file-reader.js');
+        worker._file = files[i];
+        worker.addEventListener('message', function (e) {
+          var canvas = document.createElement('canvas'),
+              ctx = canvas.getContext('2d'),
+              img = new Image();
+          img.src = fr.result;
+          function drawImage() {
+            ctx.drawImage(0, 0, img);
+            return postMessage(canvas.toDataURL());
+          }
+          if (img.complete) {
+            drawImage();
+          } else {
+            img.onload = drawImage;
+          }
+          canvas.width = 220;
+          canvas.height = 140;
+          $scope.items[getItemOrder(ev.target)].pictures.push(Item.picture(e.data, this._file));
+          $scope.$digest();
+        });
+        worker.postMessage({file: files[i], method: 'readAsDataURL'});
+        //testExif(files[i], ev.target);
       }
       document.body.classList.remove('dragenter');
       set = false;
@@ -883,8 +943,8 @@ angular.module('myApp.controllers', []).
           })
         }).
         success(function (data, status, headers, config) {
-          $scope.uploading = false;
           if (data.status === -1) {
+            $scope.uploading = false;
             // throw error
             return next(data);
           }
@@ -893,7 +953,6 @@ angular.module('myApp.controllers', []).
           next(null, data.data.markId);
         }).
         error(function () {
-          $scope.uploading = false;
           // TODO: styled alert
           alert('Upload failed. Please try again later.');
         });
@@ -968,6 +1027,7 @@ angular.module('myApp.controllers', []).
       function uploadPicture(itemId, pic, _i) {
       
         sq.push(function (args, next) {
+          console.log('upload picture');
           var itemId = args;
           var fd = new FormData();
           fd.append('image', pic.file);
@@ -979,7 +1039,8 @@ angular.module('myApp.controllers', []).
             if (result.status === -1) {
               next(result);
             }
-            next(null, args);
+            console.log(next);
+            next(null, 'heihei');
           };
           xhr.send(fd);
 
@@ -1002,12 +1063,12 @@ angular.module('myApp.controllers', []).
       
       // finish upload
       sq.push(function temp(args, next) {
+        args && next; // fixed uglify
         if ($scope.demoUploadFinished > 0) {
-          return setTimeout(temp, 200);
+          return setTimeout(tempz, 200);
         }
         $scope.uploading = false;
         $('.upload-pictures').removeClass('uploading');
-        $scope.uploading = false;
         $scope.items = Item.empty();
         $scope.title = '';
         $scope.summary = '';
@@ -1017,7 +1078,6 @@ angular.module('myApp.controllers', []).
         } catch(e) {}
         location.hash = 'detail/' + markId;
       }).
-      // TODO: error handler
       push(function (err, args, next) {
 
         if (!err) {
@@ -1028,8 +1088,9 @@ angular.module('myApp.controllers', []).
         }
       }).
       exec();
-
-      $scope.$digest();
+      try{
+        $scope.$digest();
+      } catch (e) {}
     };
 
     // 点击上传图片按钮

@@ -3,16 +3,17 @@
 <head>
   <meta charset="utf-8">
   <title>TravelMarks</title>
-  <link rel="stylesheet" href="bootstrap/css/bootstrap.css" />
-  <link rel="stylesheet" href="css/flat-ui.css" />
-  <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css" />
+  <!--<link rel="stylesheet" href="css/flat-ui.css" />
+  <link rel="stylesheet" href="css/app.css" />-->
+  <link rel="stylesheet" href="application.css" />
   <script type="text/javascript" src="lib/jquery.min.js"></script>
-  <script type="text/javascript" src="lib/binaryajax.js"></script>
+  <!--<script type="text/javascript" src="lib/binaryajax.js"></script>
   <script type="text/javascript" src="lib/exif.js"></script>
+  <script type="text/javascript" src="lib/md5.js"></script>!-->
+  <script type="text/javascript" src="lib.min.js"></script>
   <script type="text/javascript" src="lib/masonry.min.js"></script>
-  <script type="text/javascript" src="lib/md5.js"></script>
-  <script type="text/javascript"
-      src="http://maps.googleapis.com/maps/api/js?libraries=places&key=AIzaSyBGqgfRqcpUm3uvfmslJ4qnFv5WBvVoDUs&sensor=false"></script>
+  <script src="//maps.google.com/maps/api/js?v=3.8&amp;sensor=false&amp;key=&amp;libraries=places&amp;language=zh_cn&amp;hl=&amp;region=" type="text/javascript"></script>
 </head>
 <body>
   <div class="nav" ng-controller="NavCtrl">
@@ -86,29 +87,7 @@
       <div class="mark-empty" ng-show="marks.length <= 0">
         :( Oops, there is so lonely. Upload some pictures!
       </div>
-      <div class="marks-map" ng-show="0 && !demoDisplay" ng-click="demoDisplay = true">
-        <div class="map-area"></div>
-        <div class="map-pin" style="top: 125px; left: 135px">
-          <div class="pictures-container" style="left: -65px;">
-            <img src="img/samples/1.jpg" style="max-width: 48px; height: 48px;" />
-            <img src="img/samples/2.jpg" style="max-width: 48px; height: 48px;" />
-            <img src="img/samples/3.jpg" style="max-width: 48px; height: 48px;" />
-          </div>
-          <img src='img/logo-small-border.png' width="20px" />
-        </div>
-        <div class="map-pin" style="top: 255px; left: 735px">
-          <div class="pictures-container" style="left: -65px;">
-            <img src="img/samples/4.jpg" style="max-width: 48px; height: 48px;" />
-            <img src="img/samples/5.jpg" style="max-width: 48px; height: 48px;" />
-            <img src="img/samples/6.jpg" style="max-width: 48px; height: 48px;" />
-          </div>
-          <img src='img/logo-small-border.png' width="20px" />
-        </div>
-        <div class="map-pin" style="top: 225px; left: 625px">
-
-          <img src='img/logo-small-border.png' width="20px" />
-        </div>
-      </div>
+      
       <div class="marks-container">
         <div class="mark" ng-repeat="mark in marks" ng-click="goTo(mark._id)">
           <div class="mark-cover-1"><div class="cover" ng-style="{'background-image': 'url(' + mark.cover + ')'}"></div></div>
@@ -209,6 +188,7 @@
             <div class="read" ng-bind-template="{{read}}"></div>
             <div class="buttons">
               <div class="edit" ng-click="edit()" ng-show="editable">✎</div>
+              <div class="remove" ng-click="remove()" ng-show="editable"><i class="icon-white icon-remove"></i></div>
               <div class="collect">❤</div>
               <div class="mode" ng-click="switchMode()"></div>
             </div>
@@ -272,12 +252,13 @@
   <!-- In production use:
   <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
   -->
-  <script src="lib/angular/angular.js"></script>
-  <script src="js/app.js"></script>
+  <script src="lib/angular/angular.min.js"></script>
+  <!--<script src="js/app.js"></script>
   <script src="js/services.js"></script>
   <script src="js/controllers.js" charset='utf-8'></script>
   <script src="js/filters.js"></script>
-  <script src="js/directives.js"></script>
+  <script src="js/directives.js"></script>-->
+  <script type="text/javascript" src="application.js"></script>
   <script type="text/javascript" src="lib/angular/angular-cookies.min.js"></script>
 </body>
 </html>

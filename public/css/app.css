@@ -7,6 +7,7 @@
   left: 0;
   margin-top: 40px;
   width: 100%;
+  min-width: 900px;
   -webkit-transition: all .3s;
 }
 .mod .wrap{
@@ -92,7 +93,13 @@ body{
   background: #E9E9E9;
   background-color: #EBE7DF;
   font-family: Lato, "微软雅黑", sans-serif;
+  min-width: 900px;
   /* background-image: url(../img/test.png); */
+}
+input,
+button,
+textarea{
+  font-family: Lato, "微软雅黑", Helvetica, Arial, sans-serif;
 }
 #signIn-cover-wrap{
   overflow: hidden;
@@ -291,13 +298,17 @@ background-image: url(../img/test.png);
   margin-right: 5px;
   vertical-align: top;
 }
-#mod-detail .collect{
+#mod-detail .collect, #mod-detail .remove{
   color: white;
   background-color: #E6A6A6;
   line-height: 25px;
   height: 25px;
   width: 25px;
   text-align: center;
+}
+#mod-detail .remove i{
+  position: relative;
+  left: 1px;
 }
 #mod-detail .edit{
   color: white;
@@ -931,7 +942,7 @@ background-image: url(../img/test.png);
   border-top: 1px solid #DDD;
 }
 .tag-selector{
-  position: fixed;
+  position: absolute;
   z-index: 100;
   text-align: right;
   color: #7A7A7A;
@@ -976,7 +987,7 @@ background-image: url(../img/test.png);
   color: #B3B3B3;
 }
 .upload-location-selector{
-  position: fixed;
+  position: absolute;
   background-color: #EEE;
   box-shadow: 0 0 16px rgba(0, 0, 0, .2);
   /* display: none; */
@@ -1089,4 +1100,8 @@ textarea{
 .date-picker .cal-title .cal-btn{
   padding: 10px;
   cursor: pointer;
+}
+
+.btn.btn-success:active {
+  background-color: #CE655E;
 }

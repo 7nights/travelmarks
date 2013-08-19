@@ -34,6 +34,7 @@ window.Utils = {
       },
       exec: function (args){
         var next = function (err, args) {
+          console.log('next called', err, args);
           next.index++;
           if(next.index >= next.queue.length) return;
           if(err) {

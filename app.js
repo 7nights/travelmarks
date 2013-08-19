@@ -32,6 +32,7 @@ app.configure(function () {
   
   app.use('/user_data', express.static(path.join(__dirname, 'public', 'user_data'), {maxAge: MAX_AGE}));
 
+  app.use(express.compress());
   // routes
   routes(app);
 
