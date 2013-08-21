@@ -7,6 +7,10 @@ angular.module('myApp.controllers', []).
     // hide || show nav
     ModManager.addListener('before', function (mod) {
       if (mod === 'signIn') {
+        setTimeout(function temp() {
+          document.getElementById('login-username').focus();
+          if (document.activeElement !== document.getElementById('login-username')) setTimeout(temp, 100);
+        }, 300);
         $scope.$emit('NavCtrl.hide');
       }
     });
@@ -318,10 +322,14 @@ angular.module('myApp.controllers', []).
           setTimeout(function () {
             document.body.scrollTop = 0;
           }, 300);
+        } else {
+          return;
         }
       } else {
         return;
       }
+
+      $scope.items = Item.empty();
 
       $http({
         method: 'GET',
@@ -382,6 +390,7 @@ angular.module('myApp.controllers', []).
 
         }
       });
+      $scope.$digest();
     });
     
     $scope.edit = function () {

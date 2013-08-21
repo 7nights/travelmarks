@@ -33,6 +33,7 @@
   </div>
   <section class="mod" id="mod-loading">Loading...</section>
   <section class="mod" id="mod-signIn" ng-controller="SignInCtrl">
+    <div class="top-highlight"></div>
     <div id="signIn-cover-wrap"><img id="signIn-cover" src="img/samples/1.jpg" /></div>
     <div class="container">
       <div class="">
@@ -237,7 +238,9 @@
       <li ng-repeat="it in marks" class="explore-mark" data-item-no="{{$index}}" ng-click="goDetail($event)">
 
         <div class="img-wrap">
-          <div class="img-inner-wrap"><img ng-show="it.cover" ng-src="{{it.cover}}" /></div>
+          <div class="img-inner-wrap">
+            <div ng-style="{'background-image': 'url(' + it.cover + ')'}"></div>
+          </div>
         </div>
         <div class="desc-wrap"><div class="desc">
           <span class="right"><span class="light">marked by </span><img class="mark-avatar" ng-src="{{getAvatar(it.author_avatar)}}" /><strong ng-bind-template="{{it.author_name}}"></strong></span>
