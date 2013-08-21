@@ -26,7 +26,7 @@ exports.deletePictures = function (pics, callback) {
   pics.forEach(function (val, i) {
     Picture.remove({
       filename: val
-    }, function () {
+    }, function (err) {
       ep.emit('deleted');
     });
     require('fs').unlink(require('path').join('public/', val));

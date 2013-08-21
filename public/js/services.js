@@ -34,7 +34,6 @@ window.Utils = {
       },
       exec: function (args){
         var next = function (err, args) {
-          console.log('next called', err, args);
           next.index++;
           if(next.index >= next.queue.length) return;
           if(err) {
@@ -167,7 +166,7 @@ angular.module('HashManager', []).provider('HashManager', function(){
 
 
 /* Services */
-angular.module('myApp.services', ['ng', 'HashManager']).
+angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
   value('version', '0.1').
   provider('User', function () {
     var scope;
@@ -198,11 +197,11 @@ angular.module('myApp.services', ['ng', 'HashManager']).
   provider('Util', function(){
     var notice = function(){
       var ele = angular.element("<div ng-show='visible' class='alert notice'><button type='button' class='close' ng-click='close()'>×</button><span>{{msg}}</span></div>"),
-          ele2 = angular.element("<div ng-show='visible' class='tooltip bottom fade in'><div class='tooltip-arrow'></div><div class='tooltip-inner'>{{tooltip}}</div></div>"),
+          ele2 = angular.element("<div ng-show='visible' class='tooltip bottom fade in'><div class='tooltip-arrow'></div><div class='tooltip-inner' ng-bind-html='tooltip'></div></div>"),
           scope,
           scope2,
           compile;
-      angular.injector(['ng']).invoke(["$rootScope", '$compile', function($rootScope, $compile){
+      angular.injector(['ng', 'ngSanitize']).invoke(["$rootScope", '$compile', '$sanitize', function($rootScope, $compile, $sanitize){
         scope = $rootScope.$new();
         scope2 = $rootScope.$new();
         compile = $compile;
@@ -241,6 +240,11 @@ angular.module('myApp.services', ['ng', 'HashManager']).
 
 
       return function(msg, duration, _tooltip) {
+        if (msg === null) {
+          scope.ttl = 0;
+          scope2.ttl = 0;
+          return;
+        }
         if(_tooltip){
           scope2.ttl = duration || 5000;
           startTimer(scope2);
@@ -251,7 +255,6 @@ angular.module('myApp.services', ['ng', 'HashManager']).
               bounds = {
                 height: _tooltip.offsetHeight
               };
-
           tooltip[0].style.position = "absolute";
           tooltip[0].style.left = offset.left + "px";
           tooltip[0].style.top = offset.top + bounds.height + "px";
@@ -288,12 +291,13 @@ angular.module('myApp.services', ['ng', 'HashManager']).
             firstDay = new Date(year, month, 1).getDay(),
             nowDay = firstDay,
             nowTr = document.createElement("tr"),
-            TODAY_CLASS = "cal-today",
+            TODAY_CLASS = 'cal-today',
             TITLE_CLASS = 'cal-title',
+            CLOSE_CLASS = 'cal-close',
             FIRST_LINE_CLASS = "cal-first-line";
             
         title.className = TITLE_CLASS;
-        title.innerHTML = title.innerHTML = '<span class="cal-btn"><i data-pre="true" class="icon-chevron-left icon-white"></i></span><span class="cal-title-text">' + d.getFullYear() + ', ' + (d.getMonth() + 1) + '</span><span class="cal-btn"><i data-next="true" class="icon-chevron-right icon-white"></i></span>';
+        title.innerHTML = title.innerHTML = '<span class="cal-btn"><i data-pre="true" class="icon-chevron-left icon-white"></i></span><span class="cal-title-text">' + d.getFullYear() + ', ' + (d.getMonth() + 1) + '</span><span class="cal-btn"><i data-next="true" class="icon-chevron-right icon-white"></i></span><span class="' + CLOSE_CLASS + ' cal-btn"><i class="icon-remove icon-white" data-close="true"></i></span>';
         table = document.createElement("table");
         nowTr.className = "cal-firstTr";
         for(var i = 0; i < 7; i++){ // 日历标题
@@ -329,12 +333,17 @@ angular.module('myApp.services', ['ng', 'HashManager']).
 
       title.addEventListener('click', function (ev) {
         var i = ev.target;
-        if (i.tagName !== 'I' && i.className !== 'cal-btn') return;
-        i.className === 'cal-btn' && (i = i.childNodes[0]);
+
+        if (i.tagName !== 'I' && !$(i).hasClass('cal-btn')) return;
+        $(i).hasClass('cal-btn') && (i = i.childNodes[0]);
+
         if (i.dataset.pre == 'true') {
           d.setMonth(d.getMonth() - 1);
-        } else {
+        } else if (i.dataset.next === 'true'){
           d.setMonth(d.getMonth() + 1);
+        } else if (i.dataset.close === 'true') {
+          callback(null);
+          container.parentNode.removeChild(container);
         }
         var t = container.getElementsByTagName('TABLE')[0];
         t.parentElement.removeChild(t);
@@ -361,9 +370,148 @@ angular.module('myApp.services', ['ng', 'HashManager']).
       return container;
     };
 
+    /**
+     * 遮罩
+     * plexi(enable, [what='PLEXI'], [zIndex=1000], [clear])
+     * plexi.push([zIndex], [clear])
+     * plexi.remove()
+     */
+    var plexi = function () {
+      var template = '<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, .5); display: none; "></div>';
+      var plexiDiv = angular.element(template)[0];
+      document.body.appendChild(plexiDiv);
+
+      var whats = [],
+          whats_clear = [],
+          plexies = [];
+      var _method = function (enable, what, zIndex, clear) {
+        if (arguments.length < 3) {
+          zIndex = what;
+          what = 'PLEXI';
+        }
+        zIndex = zIndex || 1000;
+        zIndex > 0 && (plexiDiv.style.zIndex = zIndex);
+        if (what && enable && whats.indexOf(what) === -1) {
+          whats.push(what);
+          whats_clear[what] = clear;
+        }
+        if (what && !enable) {
+          var tmp = whats.splice(whats.indexOf(what), 1)[0];
+          whats_clear[tmp].forEach(function (val) {
+            val.classList.remove(_method.CLEAR_CLASS);
+          });
+          delete whats_clear[tmp];
+        }
+        if (whats.length > 0) {
+          plexiDiv.style.display = 'block';
+        } else {
+          plexiDiv.style.display = 'none';
+        }
+        if (clear && clear.constructor === Array) {
+          clear.forEach(function (val) {
+            val.classList.add(_method.CLEAR_CLASS);
+          });
+        }
+      };
+      _method.CLEAR_CLASS = 'clear-plexi';
+      _method.push = function (zIndex, clear) {
+        var e = angular.element(template)[0];
+        e.style.display = 'block';
+        e.style.zIndex = zIndex || 1000;
+        document.body.appendChild(e);
+        if (clear && clear.constructor === Array) {
+          clear.forEach(function (val) {
+            val.classList.add(_method.CLEAR_CLASS);
+          });
+        }
+        plexies.push({
+          plexi: e,
+          clear: clear
+        });
+      };
+      _method.remove = function () {
+        var it = plexies.pop();
+        if (!it) return;
+        it.plexi.parentNode.removeChild(it.plexi);
+        it.clear.forEach(function (val) {
+          val.classList.remove(_method.CLEAR_CLASS);
+        });
+      };
+
+      return _method;
+    }();
+
+    var settings = function () {
+      var NAMESPACE = 'jxoq532nm#$d';
+      var listeners = [];
+      var storage = {
+        get: function () {
+          if (!localStorage[NAMESPACE + '_settings']) {
+            return {};
+          } else {
+            return JSON.parse(localStorage[NAMESPACE + '_settings']);
+          }
+        },
+        set: function (obj) {
+          localStorage[NAMESPACE + '_settings'] = JSON.stringify(obj);
+        }
+      };
+      var handleListeners = function (key, newValue) {
+        var oldValue = storage.get()[key];
+        listeners.forEach(function (val) {
+          if (val.key === key) {
+            var stop = val.callback(key, oldValue, newValue);
+            if (stop) return true;
+          }
+        });
+      };
+      var _methods = {
+        set: function (key, value) {
+          var stop = handleListeners(key, value);
+          if (stop) {
+            return false;
+          }
+          var obj = storage.get();
+          obj[key] = value;
+          storage.set(obj);
+          return true;
+        },
+        get: function (key, _default) {
+          var obj = storage.get();
+          return obj[key] || _default;
+        },
+        watch: function (key, callback) {
+          listeners.forEach(function (val) {
+            if (val.key === key && val.callback === callback) return;
+          });
+          listeners.push({
+            key: key,
+            callback: callback
+          });
+        },
+        unwatch: function (key, callback) {
+          listeners.forEach(function (val, i) {
+            if (val.key === key && val.callback === callback) {
+              return listeners.splice(i, 1);
+            }
+          });
+        },
+        once: function (key, callback) {
+          var self = this;
+          this.watch(key, function temp(key, oldVal, newVal) {
+            callback(key, oldVal, newVal);
+            self.unwatch(key, temp);
+          });
+        }
+      };
+      return _methods;
+    }();
+
     var exports = {
       notice: notice,
-      getDatePicker: getDatePicker
+      getDatePicker: getDatePicker,
+      plexi: plexi,
+      settings: settings
     };
     this.$get = function(){
       return exports;

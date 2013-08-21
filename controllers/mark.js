@@ -48,8 +48,9 @@ exports.getMarks = function (req, res, next) {
       totalPictures: totalPictures
     });
   });
-  Mark.getMarksByAuthor(user._id, {sort: {date: -1}}, function (err, marks) {
+  Mark.getMarksByAuthor(user._id, {sort: {date: -1}}, function(err, marks) {
     if (err) return next(err);
+
     marks.forEach(function (o) {
       o.cover = o.coverUrl;
       o.markId = o._id;
@@ -133,9 +134,11 @@ exports.getMark = function (req, res, next) {
       summary: mark.summary,
       total: count,
       date: mark.date,
-      items: items
+      items: items,
+      author_id: mark.author
     };
 
+    Mark.increaseRead(req.param('id'));
     return res.json(result);
   }]);
 
@@ -178,7 +181,7 @@ exports.createItem = function (req, res, next) {
       date = new Date(date);
     }
     if (title) {
-      title = sanitize(title).xss().substr(0, 60);
+      title = sanitize(title).xss().substr(0, 100);
     }
   } catch(e) {
     return res.json({status: -1, message: '非法输入'});
@@ -250,17 +253,18 @@ exports.alterMark = function (req, res, next) {
   Mark.getMarkById(req.body._id, function (err, m) {
     if (err) return next(err);
     if (!m) return res.json({status: -1, message: ''});
+    if (m.author != req.session.user._id) return res.json({status: -1, message: '没有足够的权限'});
 
     if (req.body.cover) {
       var cover = sanitize(req.body.cover).xss();
       m.cover = cover;
     }
-    if (req.body.title) {
-      var title = sanitize(sanitize(req.body.title).xss()).trim().substr(0, 60);
+    var title;
+    if (req.body.title && (title = sanitize(sanitize(req.body.title).xss()).trim().substr(0, 100))) {
       m.title = title;
     }
-    if (req.body.summary) {
-      var summary = sanitize(sanitize(req.body.title).xss()).trim().substr(0, 3000);
+    var summary;
+    if (req.body.summary && (summary = sanitize(sanitize(req.body.summary).xss()).trim().substr(0, 3000))) {
       m.summary = summary;
     }
     m.save(function (err) {
@@ -287,25 +291,21 @@ exports.alterItem = function (req, res, next) {
     if (err) return next(err);
     if (!it) return res.json({status: -1, message: '此item不存在'});
 
+    if (it.author != req.session.user._id) res.json({status: -1, message: '没有权限'});
+
     if (req.body.post) {
       var post = sanitize(req.body.post).xss().substr(0, 5000);
       it.post = post;
     }
     if (req.body.tag) {
       var tag = req.body.tag;
-      tag = {
-        name: tag.name.toString(),
-        lat: parseFloat(tag.lat),
-        lng: parseFloat(tag.lng),
-        addr: tag.addr.toString()
-      };
       it.tag = tag;
     }
     if (req.body.title) {
-      var title = sanitize(sanitize(req.body.title).xss()).trim().substr(0, 60);
+      var title = sanitize(sanitize(req.body.title).xss()).trim().substr(0, 100);
       it.title = title;
     }
-    if (req.body.pictures && typeof req.body.pictures === 'array') {
+    if (req.body.pictures && req.body.pictures.constructor === Array) {
       var oldPictures = it.pictures,
           pictures = req.body.pictures;
       // find deleted pictures
@@ -358,6 +358,15 @@ exports.savePicture = function (req, res, next) {
     });
   });
   var realPath = path.join(savepath, Date.now() + "_" + utils.randomStr(5));
+  var url;
+  if(path.sep === '\\') {
+    // for windows
+    url = realPath.replace(/\\/g, '/');
+  } else {
+    url = realPath;
+  }
+  url = url.substr('public/'.length);
+
   ep.once('rename', function () {
     fs.rename(file.path, realPath, function (err) {
       if (err) return next(err);
@@ -366,21 +375,13 @@ exports.savePicture = function (req, res, next) {
   });
 
   ep.once('savemodel', function () {
-    Picture.savePicture(realPath, file.oriname, 0, user_id, function (err, doc) {
+    Picture.savePicture(url, file.oriname, 0, user_id, function (err, doc) {
       if (err) return next(err);
       ep.emit('savetoitem', doc);
     });
   });
 
   ep.once('savetoitem', function (doc) {
-    var url;
-    if(path.sep === '\\') {
-      // for windows
-      url = realPath.replace(/\\/g, '/');
-    } else {
-      url = realPath;
-    }
-    url = url.substr('public/'.length);
 
     if(!req.body.insertPos) {
       item.pictures.push(url);

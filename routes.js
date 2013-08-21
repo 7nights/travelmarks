@@ -18,13 +18,15 @@ module.exports = function (app) {
   app.get('/mark/getMark', mark.getMark);
   app.get('/mark/explore', mark.exploreMarks);
   app.post('/mark/delete', auth, utils.csrf, auth_csrf, mark.deleteMark);
+  app.post('/mark/alter', auth, mark.alterMark);
 
   // item
   app.post('/item/create', auth, mark.createItem);
+  app.post('/item/alter', auth, mark.alterItem);
 
   // picture
   app.post('/picture/save', auth, upload.uploadImage, mark.savePicture);
 
   // tag
-  app.post('/tag/create', auth, mark.createTag)
+  app.post('/tag/create', auth, mark.createTag);
 };

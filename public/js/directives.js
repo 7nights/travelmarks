@@ -11,11 +11,17 @@ angular.module('myApp.directives', []).
   }]).
   directive('autoHeightTextarea', function () {
     return function (scope, element, attrs) {
-      element[0].addEventListener('input', function (ev) {
-        if (ev.target.scrollHeight > ev.target.offsetHeight) {
+      function resize(ev) {
+        var diff = ev.target.scrollHeight - ev.target.offsetHeight;
+        if (diff > 0) {
           var height = $(ev.target).height();
-          $(ev.target).height(height + 100);
+          $(ev.target).height(height + diff);
         }
+      }
+      element[0].addEventListener('input', resize);
+      element[0].addEventListener('click', resize);
+      element[0].addEventListener('blur', function (ev) {
+        $(ev.target).height(80);
       });
     };
   }).

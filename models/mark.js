@@ -48,3 +48,12 @@ exports.getMarkById = function (id, callback) {
 exports.removeMarkById = function (id, callback) {
   Mark.remove({_id: id}, callback);
 };
+
+exports.increaseRead = function (id, callback) {
+  exports.getMarkById(id, function (err, doc) {
+    if (err) return callback(err, doc);
+    if (!doc) callback(null, null);
+    doc.read = doc.read + 1;
+    doc.save(callback);
+  });
+};

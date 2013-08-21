@@ -1,6 +1,7 @@
 var fs = require('fs'),
     path = require('path'),
     config = require('../config'),
+    im = require('imagemagick'),
     utils = require('../lib/utils');
 
 function randomStr(length){
@@ -26,5 +27,30 @@ exports.uploadImage = function(req, res, next) {
     path: file.path,
     oriname: file.name
   };
-  next();
+  // resize image
+  try {
+    im.identify(file.path, function (err, f) {
+      var opt = {
+        srcPath: file.path,
+        dstPath: file.path,
+        quality: .7
+      };
+      if (f.width > f.height && f.width > 1920) {
+        opt.width = 1920;
+      } else if (f.height > f.width && f.height > 1920){
+        opt.height = 1920;
+      }
+      if (!opt.width && !opt.height) {
+        return next();
+      }
+      im.resize(opt, function (err) {
+        if (err) return next(err);
+        next();
+      });
+    });
+  } catch(e) {
+    console.error(e);
+    next();
+  }
+  
 };

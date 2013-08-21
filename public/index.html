@@ -4,9 +4,10 @@
   <meta charset="utf-8">
   <title>TravelMarks</title>
   <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css" />
-  <!--<link rel="stylesheet" href="css/flat-ui.css" />
-  <link rel="stylesheet" href="css/app.css" />-->
-  <link rel="stylesheet" href="application.css" />
+  <link rel="stylesheet" href="css/flat-ui.css" />
+  <link rel="stylesheet" href="css/app.css" />
+  <link rel="shortcut icon" href="img/favicon.png" type="image/x-icon" />
+  <!--<link rel="stylesheet" href="application.css" />-->
   <script type="text/javascript" src="lib/jquery.min.js"></script>
   <!--<script type="text/javascript" src="lib/binaryajax.js"></script>
   <script type="text/javascript" src="lib/exif.js"></script>
@@ -16,8 +17,8 @@
   <script src="//maps.google.com/maps/api/js?v=3.8&amp;sensor=false&amp;key=&amp;libraries=places&amp;language=zh_cn&amp;hl=&amp;region=" type="text/javascript"></script>
 </head>
 <body>
-  <div class="nav" ng-controller="NavCtrl">
-    <div class="logo left">Travel Marks</div>
+  <div class="nav" ng-controller="NavCtrl" ng-hide="hideNav">
+    <div class="logo left"><img src="img/text-logo.png" />Travel Marks</div>
     <div class="nav-a left">
       <a href="#explore" id="nav-btn-explore"><i class="icon-globe"></i> Explore</a>
       <a href="#home/refresh" id="nav-btn-home" class="active"><i class="icon-map-marker icon-white"></i>Marks</a>
@@ -25,7 +26,7 @@
     <div class="nav-buttons right">
       <div ng-show="email" >
         <div class="username" ng-bind-template="{{email}}"></div>
-        <div class="btn-signout"><a ng-href="{{signout}}"><i class="icon-cog"></i></a></div>
+        <div class="btn-signout"><a ng-href="{{signout}}"><i class="icon-off"></i></a></div>
         <div class="avatar"><img ng-src="{{avatar}}" /></div>
       </div>
     </div>
@@ -33,25 +34,23 @@
   <section class="mod" id="mod-loading">Loading...</section>
   <section class="mod" id="mod-signIn" ng-controller="SignInCtrl">
     <div id="signIn-cover-wrap"><img id="signIn-cover" src="img/samples/1.jpg" /></div>
-    <div class="container" style="width: 1020px;">
-      <div class="row">
-        <div class="span8">
+    <div class="container">
+      <div class="">
+        <div>
           <div class="brand"><img src="img/logo-small-rotate.png" />TravelMarks</div>
-          <br />
-          <div class="location"><strong>- New Zealand</strong></div>
-          <br />
-          <div class="desc">New Zealand is situated some 1,500 kilometres (900 mi) east of Australia across the Tasman Sea and roughly 1,000 kilometres (600 mi) south of the Pacific island nations of New Caledonia, Fiji, and Tonga. Because of its remoteness, it was one of the last lands to be settled by humans.</div>
-          <div class="author right">Marked by 500px.com</div>
         </div>
-        <div class="span5">
-          <div class="login-box right">
-            <input ng-model="inputUsername" spellcheck="false" placeholder="Username" class="span4" id="login-username" type="text" />
-            <br />
-            <input ng-model="inputPassword" placeholder="Password" class="span4" id="login-password" type="password" />
-            <br />
-            <input ng-model="inputRepassword" placeholder="Confirm your password" class="span4" id="login-repassword" type="password" ng-show="showEmail"/>
-            <br ng-show="showEmail" />
-            <input ng-model="inputEmail" placeholder="E-mail" class="span4" id="login-email" type="email" ng-show="showEmail" />
+        <div class="description">
+          Mark every corner you have ever been.<br />
+          Find every place you will love.
+        </div>
+        <div>
+          <div class="login-box">
+            <div class="input-wrap">
+              <div class="input-line-wrap"><input ng-model="inputUsername" spellcheck="false" placeholder="Username" class="span4" id="login-username" type="text" /></div>
+              <div class="input-line-wrap"><input ng-model="inputPassword" placeholder="Password" class="span4" id="login-password" type="password" /></div>
+              <div ng-show="showEmail" class="input-line-wrap"><input ng-model="inputRepassword" placeholder="Confirm your password" class="span4" id="login-repassword" type="password" ng-show="showEmail"/></div>
+              <div ng-show="showEmail" class="input-line-wrap"><input ng-model="inputEmail" placeholder="E-mail" class="span4" id="login-email" type="email"  /></div>
+            </div>
             <div class="error" ng-bind-template="{{errorMessage}}" ng-show="errorMessage!=''"></div>
             <div class="desc"><a href="#" ng-click='signUp($event)' ng-bind-template='{{loginBoxDesc}}'>Sign up right now!</a></div>
             <button id="login-btn" class="btn right" ng-bind-template='{{loginBtn}}' ng-click='submit()'>Sign In</button>
@@ -63,7 +62,7 @@
   </section><!-- /#mod-signIn -->
   <section class="mod" id="mod-home" ng-controller="HomeCtrl">
     <div class="mod-nav">
-      <div class="container wrap-padding">
+      <div class="container wrap-padding left-indent">
         <div class="head left">My Marks</div>
 
         <div class="buttons">
@@ -82,29 +81,30 @@
         <div class="clear"></div>
       </div>
     </div>
-    <div class="container wrap-padding">
-      
-      <div class="mark-empty" ng-show="marks.length <= 0">
-        :( Oops, there is so lonely. Upload some pictures!
-      </div>
-      
-      <div class="marks-container">
-        <div class="mark" ng-repeat="mark in marks" ng-click="goTo(mark._id)">
-          <div class="mark-cover-1"><div class="cover" ng-style="{'background-image': 'url(' + mark.cover + ')'}"></div></div>
-          <div class="mark-cover-2"><div class="cover" ng-style="{'background-image': 'url(' + mark.cover + ')'}"></div></div>
-          <div class="desc">
-            <span class="title">{{mark.title}}</span>
-            <span class="location">{{mark.location}}</span>
-            <span class="date">{{filterDate(mark.date)}}</span>
-          </div>
-          <div class="summary" ng-click="$event.stopPropagation()">
-            <span>{{mark.summary}}</span>
-            <br />
-            <br />
-            
-          </div>
+    <div class="container">
+      <div class="wrap-padding">
+        <div class="mark-empty" ng-show="marks.length <= 0">
+          :( Oops, there is so lonely. Upload some pictures!
         </div>
-      </div><!-- /.marks-container -->
+        
+        <div class="marks-container">
+          <div class="mark" ng-repeat="mark in marks" ng-click="goTo(mark._id)">
+            <div class="mark-cover-1"><div class="cover" ng-style="{'background-image': 'url(' + mark.cover + ')'}"></div></div>
+            <div class="mark-cover-2"><div class="cover" ng-style="{'background-image': 'url(' + mark.cover + ')'}"></div></div>
+            <div class="desc">
+              <span class="title">{{mark.title}}</span>
+              <span class="location">{{mark.location}}</span>
+              <span class="date">{{filterDate(mark.date)}}</span>
+            </div>
+            <div class="summary" ng-click="$event.stopPropagation()">
+              <span>{{mark.summary}}</span>
+              <br />
+              <br />
+              
+            </div>
+          </div>
+        </div><!-- /.marks-container -->
+      </div>
     </div>
   </section><!-- /#mod-home -->
 
@@ -132,7 +132,7 @@
         </div>
         <div class="item">
           <strong>Summary</strong>
-          <textarea auto-height-textarea ng-model="summary"></textarea>
+          <textarea class="custom-scrollbar" auto-height-textarea ng-model="summary"></textarea>
         </div>
         <br />
         <ul class="item-box">
@@ -141,7 +141,7 @@
             <div class="upload-pictures" ng-click="upload($event)">
               <div class="drop-pictures"><span>Drop Pictures Here</span></div>
               <div class="upload-pictures-container">
-                <div>Upload Pictures...</div>
+                <div>Upload Pictures...<div class="right" class="remove" ng-click="removeItem($event)" ng-hide="$first">x</div></div>
                 <div class="clear"></div>
                 <br ng-hide="it.pictures.length == 0" />
                 <div class="upload-pictures-list" data-order="{{$index}}" ng-repeat="pic in it.pictures" ng-hide="it.pictures.length == 0">
@@ -160,7 +160,7 @@
               <div class="item-tag" ng-bind-template="{{it.tag.name || 'somewhere'}}"></div>
             </div>
             <input class='it-post-date' placeholder='Date' ng-model='it.date' />
-            <div class='it-post-box'><textarea auto-height-textarea ng-model='it.post' class='it-post' placeholder='This is...' ></textarea></div>
+            <div class='it-post-box'><textarea auto-height-textarea ng-model='it.post' class='it-post custom-scrollbar' placeholder='This is...' ></textarea></div>
           </li>
         </ul>
         <button class='btn btn-info' ng-click='addMore()'>Upload More</button>
@@ -184,7 +184,7 @@
           <div class="clear"></div>
      
           <div class="float-wrap">
-            <div class="location" ng-bind-template="{{location}}"></div>
+            <!--<div class="location" ng-bind-template="{{location}}"></div>-->
             <div class="read" ng-bind-template="{{read}}"></div>
             <div class="buttons">
               <div class="edit" ng-click="edit()" ng-show="editable">✎</div>
@@ -253,12 +253,13 @@
   <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
   -->
   <script src="lib/angular/angular.min.js"></script>
-  <!--<script src="js/app.js"></script>
+  <script src="js/app.js"></script>
   <script src="js/services.js"></script>
   <script src="js/controllers.js" charset='utf-8'></script>
   <script src="js/filters.js"></script>
-  <script src="js/directives.js"></script>-->
-  <script type="text/javascript" src="application.js"></script>
+  <script src="js/directives.js"></script>
+  <script src="lib/angular/angular-sanitize.min.js"></script>
+  <!--<script type="text/javascript" src="application.js"></script>-->
   <script type="text/javascript" src="lib/angular/angular-cookies.min.js"></script>
 </body>
 </html>

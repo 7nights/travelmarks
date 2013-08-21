@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css?family=Lato:400,700,700italic,900,400italic,300");
+@import url("http://fonts.googleapis.com/css?family=Lato:400,700,700italic,900,400italic,300");
 @font-face {
   font-family: 'Flat-UI-Icons';
   src: url('../fonts/Flat-UI-Icons.eot');
@@ -2312,7 +2312,7 @@ textarea[class*="span"] {
   padding-top: 8px;
 }
 .tooltip.bottom .tooltip-arrow {
-  border-bottom-color: #34495E;
+  border-bottom-color: #E9A782;
   border-width: 0 9px 9px;
   margin-left: 0px;
   top: -1px;
@@ -2324,7 +2324,7 @@ textarea[class*="span"] {
   right: -3px;
 }
 .tooltip-inner {
-  background-color: #34495e;
+  background-color: #E9A782;
   line-height: 17.99px;
   padding: 12px 12px;
   text-align: center;

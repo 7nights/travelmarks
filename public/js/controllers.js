@@ -4,6 +4,17 @@
 
 angular.module('myApp.controllers', []).
   controller('SignInCtrl', ['$scope', '$http', 'ModManager', 'Util', 'User', function ($scope, $http, ModManager, Util, User) {
+    // hide || show nav
+    ModManager.addListener('before', function (mod) {
+      if (mod === 'signIn') {
+        $scope.$emit('NavCtrl.hide');
+      }
+    });
+    ModManager.addListener('unload', function (mod) {
+      if (mod === 'signIn') {
+        $scope.$emit('NavCtrl.show');
+      }
+    });
     $scope.loginBoxDesc = 'Sign up right now!';
     $scope.loginBtn = 'Sign In';
     $scope.showEmail = false;
@@ -27,6 +38,9 @@ angular.module('myApp.controllers', []).
       
       !!ev && ev.preventDefault();
     };
+    $('#login-password').keydown(function (ev) {
+      if (ev.keyCode === 13) $scope.submit();
+    });
     $scope.submit = function (ev){
       if ($scope.submiting) return;
       // check input
@@ -170,7 +184,18 @@ angular.module('myApp.controllers', []).
     };
 
   }]).
-  controller('NavCtrl', ['$scope', '$http', 'User', function ($scope, $http, User) {
+  controller('NavCtrl', ['$scope', '$http', 'User', '$rootScope', function ($scope, $http, User, $rootScope) {
+    $scope.hideNav = false;
+    // hide || show nav
+    $rootScope.$on('NavCtrl.hide', function () {
+      $scope.hideNav = true;
+      $scope.$digest();
+    });
+    $rootScope.$on('NavCtrl.show', function () {
+      $scope.hideNav = false;
+      $scope.$digest();
+    });
+
     function bindUserinfo() {
       if (User.email) {
         $scope.avatar = 'http://www.gravatar.com/avatar/' + hex_md5(User.email) + '?s=32&' + 
@@ -308,6 +333,7 @@ angular.module('myApp.controllers', []).
       success(function (data) {
         if (data.status !== -1) {
           lastData = data;
+          lastData.id = HashManager.getArgs().id;
           $scope.id = HashManager.getArgs().id;
           $scope.title = data.title;
           $scope.location = data.location;
@@ -330,6 +356,8 @@ angular.module('myApp.controllers', []).
             it.title = val.title;
             it.date = val.date;
             it.tag = val.tag;
+            it.tag.uid = parseInt(Math.random() * 10000) + '' + parseInt(Math.random() * 10000);
+
             val.pictures.forEach(function (pic) {
               var newPic = Item.picture(pic),
                   img = new Image();
@@ -357,7 +385,7 @@ angular.module('myApp.controllers', []).
     });
     
     $scope.edit = function () {
-      return alert('编辑功能有待working……');
+      
       ModManager.setData(lastData);
       location.hash = 'upload/edit';
     };
@@ -448,7 +476,8 @@ angular.module('myApp.controllers', []).
   controller('UploadCtrl', ['$scope', '$http', 'ModManager', 'Item', '$q', 'Util', 'HashManager', function ($scope, $http, ModManager, Item, $q, Util, HashManager) {
     // init && clean up
     var req = new google.maps.places.PlacesService(document.createElement('div')),
-        cachedData;
+        cachedData,
+        cachedItems;
     //var req = new google.maps.places.AutoCompleteService();
     ModManager.addListener('before', function (mod) {
       if (mod === 'upload' ) {
@@ -463,11 +492,26 @@ angular.module('myApp.controllers', []).
         var m = ModManager.getData();
         if (!m) return history.back();
         cachedData = m;
+        cachedItems = [];
+        cachedData.items.forEach(function (val, i) {
+          var obj = {
+            title: val.title,
+            date: val.date,
+            _id: val._id,
+            post: val.post,
+            tag: {
+              _id: val.tag._id
+            },
+            pictures: cachedData.items[i].pictures.slice()
+          };
+          cachedItems[i] = obj;
+        });
         ModManager.setData(null);
         $scope.title = m.title;
         $scope.author = m.author;
         $scope.summary = m.summary;
         $scope.locTags = [];
+        $scope.id = m.id;
         var added = [];
         m.items.forEach(function (val) {
           var tag = val.tag;
@@ -476,11 +520,13 @@ angular.module('myApp.controllers', []).
           val.addr = tag.addr || 'loading...';
           val.pos = val.addr;
           $scope.locTags.push({
+            id: tag._id,
             name: tag.name,
             geometry: {
               lat: tag.lat,
               lng: tag.lng
             },
+            uid: tag.uid,
             pos: tag.addr || 'loading...',
             results: [{
               formatted_address: tag.addr || tag.name,
@@ -525,9 +571,81 @@ angular.module('myApp.controllers', []).
             setTimeout( temp, 100);
           }
         }, 100);
+
+        // tips
+        setTimeout(function () {
+          if (Util.settings.get('upload-tips', false) || HashManager.getArgs().edit === 'edit') return;
+          Util.settings.set('upload-tips', true);
+          var sq = new Utils.syncQueue();
+          sq.push(function (args, next) {
+            var e = document.getElementById('upload-title-input');
+            Util.notice('<strong>Step 1.</strong> Give your mark a name. (press enter to next step)', 99999, e);
+            $(document).one('keydown', function temp(ev) {
+              if (ev.keyCode !== 13) {
+                return $(document).one('keydown', temp);
+              }
+              Util.plexi(false, 'title');
+              next(null);
+            });
+
+            Util.plexi(true, 'title', 0, [e.parentNode]);
+          }).
+          push(function (args, next) {
+            var e = document.getElementById('upload-location-input');
+            Util.notice('<strong>Step 2.</strong> Type a place and PRESS ENTER.', 99999, e);
+            $(document).one('keydown', function temp(ev) {
+              if (ev.keyCode !== 13) {
+                return $(document).one('keydown', temp);
+              }
+              ev.preventDefault();
+              Util.plexi(false, 'location');
+              next(null);
+            });
+            Util.plexi(true, 'location', 0, [e.parentNode]);
+          }).
+          push(function (args, next) {
+            var e = document.querySelector('#mod-upload textarea');
+            e.focus();
+            Util.notice('<strong>Step 3.</strong> Here your story begins... (press enter to next step)', 99999, e);
+            $(document).one('keydown', function temp(ev) {
+              if (ev.keyCode !== 13) {
+                return $(document).one('keydown', temp);
+              }
+              ev.preventDefault();
+              Util.notice(null);
+              Util.plexi(false, 'summary');
+              next(null);
+            });
+            Util.plexi(true, 'summary', 0, [e.parentNode]);
+          }).
+          push(function (args, next) {
+            var e = angular.element('<div style="position: fixed; background-color: #E9A782; color: white;"></div>')[0];
+            var bounds = document.querySelector('#mod-upload .item-box').getBoundingClientRect();
+            e.style.left = bounds.left + 'px';
+            e.style.top = bounds.top + 'px';
+            e.style.width = bounds.right - bounds.left + 'px';
+            e.style.height = bounds.bottom - bounds.top + 'px';
+            e.innerHTML = '<div style="padding: 10px; font-size: 20px; margin-top: 60px; text-align: center;">A mark is composed of sites. And each site consists of a title, a description and some pictures.</div>';
+            document.body.appendChild(e);
+            Util.plexi(true, 'item', 0, [e]);
+            setTimeout(function () {
+              document.querySelector('#mod-upload .item-box li .it-post-title').focus();
+              e.parentNode.removeChild(e);
+              Util.plexi(false, 'item');
+            }, 6000);
+          }).
+          exec();
+        }, 300);
       }
     });
 
+    // title input
+    $('#upload-title-input').keydown(function (ev) {
+      if (ev.keyCode === 13) {
+        $('#upload-location-input').focus();
+        ev.preventDefault();
+      }
+    });
 
     // location tag selector
     var ltsScope,
@@ -541,6 +659,7 @@ angular.module('myApp.controllers', []).
       lsScope = $rootScope.$new();
       ltsScope = $scope.$new();
       lsScope.deleteTag = function () {
+
         var uid = $scope.locTags[lsScope.order].uid;
         $('#mod-upload .item-box li').each(function (i, val) {
           if ($scope.items[i].tag && $scope.items[i].tag.uid === uid) {
@@ -613,6 +732,13 @@ angular.module('myApp.controllers', []).
 
         });
       });
+      window.addEventListener('resize', function () {
+        if (clonedElement[0]._bindElement) {
+          var bounds = $(clonedElement[0]._bindElement).offset();
+          clonedElement[0].style.top = bounds.top - 9 + "px";
+          clonedElement[0].style.left = bounds.left - 22 + "px";
+        }
+      });
 
       // lts
       ltsScope.show = false;
@@ -620,7 +746,6 @@ angular.module('myApp.controllers', []).
       lts_ce = $compile(e)(ltsScope, function (lts_ce, scope) {
         document.body.appendChild(lts_ce[0]);
         $(lts_ce[0]).delegate('.tag', 'click', function (ev) {
-          console.log(this);
           if (!this.classList.contains('tag')) {
             return;
           }
@@ -705,6 +830,7 @@ angular.module('myApp.controllers', []).
       lsScope.order = order;
       lsScope.$digest();
       var bounds = $(e).offset();
+      clonedElement[0]._bindElement = e;
       clonedElement[0].style.top = bounds.top - 9 + "px";
       clonedElement[0].style.left = bounds.left - 22 + "px";
       ev.stopPropagation();
@@ -722,10 +848,22 @@ angular.module('myApp.controllers', []).
           e = e.parentNode;
         }
         lsScope.show = false;
+        clonedElement[0]._bindElement = null;
         lsScope.$digest();
       });
     });
 
+    // 点击删除图片
+    $('#mod-upload .item-box').delegate('.upload-pictures-list', 'click', function (ev) {
+      ev.stopPropagation();
+      ev.preventDefault();
+      var e = ev.target;
+      while (!e.dataset.order) e = e.parentNode;
+      var itemOrder = getItemOrder(e);
+      $scope.items[itemOrder].pictures.splice(+e.dataset.order, 1);
+      $scope.$digest();
+      return false;
+    });
 
     // focus
     $('#mod-upload .item').delegate('input, textarea', 'focus', function (ev) {
@@ -748,6 +886,7 @@ angular.module('myApp.controllers', []).
       input.blur();
       if (picker) return;
       picker = Util.getDatePicker(null, function (date) {
+        if (date === null) return picker = null;
         picker.parentElement.removeChild(picker);
         picker = null;
         input.dataset.date = date.getTime();
@@ -843,8 +982,9 @@ angular.module('myApp.controllers', []).
           var canvas = document.createElement('canvas'),
               ctx = canvas.getContext('2d'),
               img = new Image();
-          img.src = fr.result;
-          function drawImage() {
+          img.src = e.data;
+          /*function drawImage() {
+            console.log(img);
             ctx.drawImage(0, 0, img);
             return postMessage(canvas.toDataURL());
           }
@@ -852,7 +992,7 @@ angular.module('myApp.controllers', []).
             drawImage();
           } else {
             img.onload = drawImage;
-          }
+          }*/
           canvas.width = 220;
           canvas.height = 140;
           $scope.items[getItemOrder(ev.target)].pictures.push(Item.picture(e.data, this._file));
@@ -882,7 +1022,7 @@ angular.module('myApp.controllers', []).
     }
     $scope.progressWidth = function (p) {
       if ($(document.getElementsByClassName('upload-pictures')[0]).hasClass('uploading')) {
-        return p.progress / 100 * 216 + 'px'
+        return p.progress / 100 * 216 + 'px';
       }
       return 220 + 'px';
     };
@@ -904,14 +1044,6 @@ angular.module('myApp.controllers', []).
       if ($scope.uploading) return;
       $scope.uploading = true;
 
-      // edit mode
-      if ($scope.editMode) {
-        
-        return $scope.$digest();
-      }
-
-      $('.upload-pictures').addClass('uploading');
-
       // TODO: 验证
       var pass = true;
       $scope.items.forEach(function (val, i) {
@@ -926,6 +1058,165 @@ angular.module('myApp.controllers', []).
         $scope.uploading = false;
         return;
       }
+
+      // edit mode
+      if ($scope.editMode) {
+        var funcs = [];
+        var totalUpdateCount = 0;
+        var finishTotalUpdate = function () {
+          if (--totalUpdateCount > 0) return;
+          location.hash = 'detail/' + $scope.id;
+          $scope.uploading = false;
+        };
+
+        // 判断mark是否有更改, 如果有提交到队列
+        if ($scope.title !== cachedData.title ||
+          $scope.summary !== cachedData.summary) {
+          funcs.push(function () {
+            totalUpdateCount++;
+            $http({
+              method: 'post',
+              url: 'mark/alter',
+              data: {
+                _id: $scope.id,
+                title: $scope.title,
+                summary: $scope.summary
+              }
+            }).success(function () {
+              finishTotalUpdate();
+            });
+          });
+        }
+        // 判断是否有新的tags, 如果有提交到队列
+        var newTags = [];
+        $scope.locTags.forEach(function (val, i) {
+          if ('_id' in val || 'id' in val) return;
+          newTags.push({
+            tag: val,
+            index: i
+          });
+        });
+        var promises = 0;
+        funcs.push(function () {
+          newTags.forEach(function (val, i) {
+            $http({
+              method: 'post',
+              url: 'tag/create',
+              data: {
+                markId: $scope.id,
+                name: val.tag.name,
+                addr: val.tag.pos,
+                lat: val.tag.results[val.tag.activeTag].geometry.location.jb,
+                lng: val.tag.results[val.tag.activeTag].geometry.location.kb
+              }
+            }).
+            success(function (data) {
+              val.tag._id = data.data.tagId;
+              $scope.locTags[val.index].id = data.data.tagId;
+              decreasePromises();
+            });
+            promises++;
+          });
+          if (newTags.length === 0) {
+            decreasePromises();
+          }
+        });
+
+        var decreasePromises = function () {
+          if (--promises > 0) {
+            return;
+          }
+          // 判断是否有更新items, 如果有则修改
+          var itemsUpdateCount = 0; // 有多少的items需要更新
+          $scope.items.forEach(function (val, i) {
+            var updateItem = false,
+                waitPicture = 0;
+
+            if (val.title !== cachedItems[i].title ||
+              val.post !== cachedItems[i].post ||
+              new Date(val.date).getTime() !== new Date(cachedItems[i].date).getTime() ||
+              val.tag._id !== cachedItems[i].tag._id
+              ) {
+              updateItem = true;
+            }
+            // 是否有新图片
+            cachedItems[i].pictures.forEach(function (pic, j) {
+              if (pic !== val.pictures[j]) {
+                updateItem = true;
+              }
+            });
+
+            val.pictures.forEach(function (pic, j) {
+              if (typeof pic !== 'string') {
+                waitPicture++;
+                (function (index) {
+                  var fd = new FormData();
+                  fd.append('image', pic.file);
+                  fd.append('itemId', val._id);
+                  var xhr = new XMLHttpRequest();
+                  xhr.open('POST', '/picture/save');
+                  xhr.onload = function () {
+                    var result = JSON.parse(xhr.response);
+                    if (result.status === -1) {
+                      // TODO
+                      alert('上传失败');
+                    }
+                    val.pictures[index] = result.data.url;
+                    finishPicture();
+                  };
+                  xhr.send(fd);
+                })(j);
+              }
+            });
+
+            if (updateItem || waitPicture) {
+              itemsUpdateCount++;
+              totalUpdateCount++;
+            }
+            var finishPicture = function () {
+              if (--waitPicture > 0) return;
+              doUpdateItem();
+            },
+            doUpdateItem = function () {
+              $http({
+                method: 'post',
+                url: 'item/alter',
+                data: {
+                  _id: val._id,
+                  post: val.post,
+                  tag: val.tag._id || val.tag.id,
+                  title: val.title,
+                  pictures: val.pictures,
+                  date: val.date
+                }
+              }).
+              success(function (data) {
+                if (data.status === 1) {
+                  finishTotalUpdate();
+                  doFinishItems();
+                }
+              });
+            };
+
+            if (!waitPicture && updateItem) {
+              doUpdateItem();
+            }
+
+          });
+
+          function doFinishItems() {
+            if (--itemsUpdateCount > 0) return;
+          }
+        };
+
+        funcs.forEach(function (val) {
+          val();
+        });
+
+        return;
+      }
+
+      $('.upload-pictures').addClass('uploading');
       
       var sq = new Utils.syncQueue(),
           markId;
@@ -961,7 +1252,6 @@ angular.module('myApp.controllers', []).
       // step 2: create tags
       function createTag(t) {
         sq.push(function (args, next) {
-          console.log(t);
           var tag = {
             markId: markId,
             name: t.name,
@@ -1039,8 +1329,7 @@ angular.module('myApp.controllers', []).
             if (result.status === -1) {
               next(result);
             }
-            console.log(next);
-            next(null, 'heihei');
+            next(null, result.data.url);
           };
           xhr.send(fd);
 
@@ -1065,7 +1354,7 @@ angular.module('myApp.controllers', []).
       sq.push(function temp(args, next) {
         args && next; // fixed uglify
         if ($scope.demoUploadFinished > 0) {
-          return setTimeout(tempz, 200);
+          return setTimeout(temp, 200);
         }
         $scope.uploading = false;
         $('.upload-pictures').removeClass('uploading');
@@ -1092,10 +1381,21 @@ angular.module('myApp.controllers', []).
         $scope.$digest();
       } catch (e) {}
     };
-
+    // 删除item
+    $scope.removeItem = function (ev) {
+      var order = getItemOrder(ev.target);
+      $scope.items.splice(order, 1);
+      ev.preventDefault();
+      ev.stopPropagation();
+    };
     // 点击上传图片按钮
     var currentUploadTarget = 0;
     $scope.upload = function (ev) {
+      var e = ev.target;
+      while(e) {
+        if ($(e).hasClass('upload-pictures-list')) return;
+        e = e.parentNode;
+      }
       currentUploadTarget = getItemOrder(ev.target);
       angular.element('.upload-input')[0].click();
     };
