@@ -35,7 +35,7 @@ exports.uploadImage = function(req, res, next) {
         dstPath: file.path,
         quality: .7
       };
-      if (f.width > f.height && f.width > 1920) {
+      if (f.width >= f.height && f.width > 1920) {
         opt.width = 1920;
       } else if (f.height > f.width && f.height > 1920){
         opt.height = 1920;
