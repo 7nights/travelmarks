@@ -619,6 +619,7 @@ angular.module('myApp.controllers', []).
             Util.plexi(true, 'summary', 0, [e.parentNode]);
           }).
           push(function (args, next) {
+            args && next; // fixed uglify
             var e = angular.element('<div style="position: fixed; background-color: #E9A782; color: white;"></div>')[0];
             var bounds = document.querySelector('#mod-upload .item-box').getBoundingClientRect();
             e.style.left = bounds.left + 'px';
@@ -1329,7 +1330,7 @@ angular.module('myApp.controllers', []).
             if (result.status === -1) {
               next(result);
             }
-            next(null, result.data.url);
+            next(null, itemId);
           };
           xhr.send(fd);
 
