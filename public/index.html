@@ -14,7 +14,7 @@
   <script type="text/javascript" src="lib/md5.js"></script>!-->
   <script type="text/javascript" src="lib.min.js"></script>
   <script type="text/javascript" src="lib/masonry.min.js"></script>
-  <script src="//maps.google.com/maps/api/js?v=3.8&amp;sensor=false&amp;key=&amp;libraries=places&amp;language=zh_cn&amp;hl=&amp;region=" type="text/javascript"></script>
+  <script src="http://maps.google.com/maps/api/js?v=3.8&amp;sensor=false&amp;key=&amp;libraries=places&amp;language=zh_cn&amp;hl=&amp;region=" type="text/javascript"></script>
 </head>
 <body>
   <div class="nav" ng-controller="NavCtrl" ng-hide="hideNav">
@@ -34,7 +34,7 @@
   <section class="mod" id="mod-loading">Loading...</section>
   <section class="mod" id="mod-signIn" ng-controller="SignInCtrl">
     <div class="top-highlight"></div>
-    <div id="signIn-cover-wrap"><img id="signIn-cover" src="img/samples/1.jpg" /></div>
+    <div id="signIn-cover-wrap"><div id="signIn-cover"></div></div>
     <div class="container">
       <div class="">
         <div>
@@ -235,11 +235,11 @@
       </div>
     </div>
     <ul class="explore-container container">
-      <li ng-repeat="it in marks" class="explore-mark" data-item-no="{{$index}}" ng-click="goDetail($event)">
+      <li ng-repeat="it in marks" class="explore-mark" data-item-no="{{$index}}">
 
         <div class="img-wrap">
           <div class="img-inner-wrap">
-            <div ng-style="{'background-image': 'url(' + it.cover + ')'}"></div>
+            <a  href="#detail/{{it._id}}" ng-style="{'background-image': 'url(' + it.cover + ')'}"></a>
           </div>
         </div>
         <div class="desc-wrap"><div class="desc">

@@ -10,7 +10,8 @@
     "validator": "0.3.7",
     "xss": "0.0.5",
     "imagemagick": "*",
-    "eventproxy": "0.2.5"
+    "eventproxy": "0.2.5",
+    "tunnel": "*"
   },
   "devDependencies": {
     "grunt": "~0.4.1"

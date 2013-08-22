@@ -554,7 +554,7 @@ h6 {
 }
 .btn.btn-info {
   background-color: #48BBE7;
-  border-radius: 0;
+  border-radius: 2px;
   border-bottom: 3px solid #4A89CE;
 }
 .btn.btn-info:hover,
@@ -584,6 +584,7 @@ h6 {
 .btn.btn-success {
   background-color: #E76E66;
   border-bottom: 3px solid #BE524B;
+  border-radius: 2px;
 }
 .btn.btn-success:hover,
 .btn.btn-success:focus,

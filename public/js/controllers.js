@@ -88,6 +88,7 @@ angular.module('myApp.controllers', []).
             } else {
               window.location.hash = '';
               $scope.errorMessage = data.message;
+              $('#login-btn').css('opacity', '1');
             }
           }).
           error(function () {
@@ -112,6 +113,7 @@ angular.module('myApp.controllers', []).
             } else {
               window.location.hash = '';
               $scope.errorMessage = data.message;
+              $('#login-btn').css('opacity', '1');
             }
           }).
           error(function () {
@@ -253,7 +255,7 @@ angular.module('myApp.controllers', []).
       return new Date(date).toLocaleString();
     };
 
-    document.getElementById('signIn-cover').src = 'img/samples/' + Math.round(Math.random() * 6 + 1) + '.jpg';
+    document.getElementById('signIn-cover').style.backgroundImage = 'url(img/samples/' + Math.round(Math.random() * 6 + 1) + '.jpg)';
 
     $scope.modeSwitch = function (mode) {
       $('.mark').css({'margin-top': 10, 'border-bottom-width': '3px'});
