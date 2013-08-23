@@ -283,7 +283,7 @@ angular.module('myApp.controllers', []).
       location.hash = "detail/" + id;
     };
   }]).
-  controller('DetailCtrl', ['$scope', '$http', 'HashManager', 'ModManager', 'User', function ($scope, $http, HashManager, ModManager, User) {
+  controller('DetailCtrl', ['$scope', '$http', 'HashManager', 'ModManager', 'User', '$rootScope', function ($scope, $http, HashManager, ModManager, User, $rootScope) {
     var lastData;
 
     ModManager.addListener('before', function (mod) {
@@ -465,6 +465,10 @@ angular.module('myApp.controllers', []).
     };
 
     var cachedId = null;
+    // 清除cachedId
+    $rootScope.$on('DetailCtrl.clearCache', function () {
+      cachedId = null; 
+    });
 
     $scope.title = '';
     $scope.location = '';
@@ -1101,6 +1105,7 @@ angular.module('myApp.controllers', []).
         var totalUpdateCount = 0;
         var finishTotalUpdate = function () {
           if (--totalUpdateCount > 0) return;
+          $scope.$emit('DetailCtrl.clearCache');
           location.hash = 'detail/' + $scope.id;
           $scope.uploading = false;
         };
