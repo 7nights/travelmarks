@@ -11,7 +11,8 @@
     "xss": "0.0.5",
     "imagemagick": "*",
     "eventproxy": "0.2.5",
-    "tunnel": "*"
+    "tunnel": "*",
+    "colors": "*"
   },
   "devDependencies": {
     "grunt": "~0.4.1"

@@ -682,10 +682,10 @@ angular.module('myApp.controllers', []).
         $scope.$digest();
         lsScope.show = false;
       };
-      var e = angular.element('<div ng-show="show" class="upload-location-selector"><div class="selector-nav"><span class="selector-result"><i class="icon-white icon-map-marker"></i><span ng-bind-template="{{result}}" class="result-text"></span></span></div><div class="input-wrap"><input ng-model="inputName" type="text" class="selector-input-name" /></div><div class="input-wrap"><input type="text" class="selector-input-pos" ng-model="inputPos" /></div><div class="selector-results"><div class="results-item" ng-repeat="it in results" data-item-order="{{$index}}" ng-bind-template="{{it.formatted_address}}"></div><div class="results-footer" ><div ng-click="deleteTag()" class="delete">Delete this tag</div><div class="results-num" ng-bind-template="{{results.length}} result(s)"></div><div class="clear"></div></div></div></div>');
+      var e = angular.element('<div ng-show="show" class="upload-location-selector"><div class="selector-nav"><span class="selector-result"><i class="icon-white icon-map-marker"></i><span ng-bind-template="{{result}}" class="result-text"></span></span></div><div class="input-wrap"><input ng-model="inputName" type="text" class="selector-input-name" /></div><div class="input-wrap location"><input type="text" class="selector-input-pos" ng-model="inputPos" /></div><div class="selector-results"><div class="results-item" ng-repeat="it in results" data-item-order="{{$index}}" ng-bind-template="{{it.formatted_address}}"></div><div class="results-footer" ><div ng-click="deleteTag()" class="delete">Delete this tag</div><div class="results-num" ng-bind-template="{{results.length}} result(s)"></div><div class="clear"></div></div></div></div>');
       clonedElement = $compile(e)(lsScope, function (clonedElement, scope) {
         document.body.appendChild(clonedElement[0]);
-        var list = document.getElementsByClassName('selector-results')[0];
+        var list = clonedElement[0].getElementsByClassName('selector-results')[0];
         list.addEventListener('click', function (ev) {
           if (!ev.target.classList.contains('results-item')) return;
           var order = +ev.target.dataset.itemOrder;
@@ -697,6 +697,25 @@ angular.module('myApp.controllers', []).
           $scope.$digest();
           lsScope.$digest();
           ev.stopPropagation();
+        });
+        var eleInputPos = clonedElement[0].getElementsByClassName('selector-input-pos')[0];
+        eleInputPos.addEventListener('keydown', function (ev) {
+          var _list = list.getElementsByTagName('div');
+          switch (ev.keyCode) {
+            case 38:// up
+              $(_list[lsScope.selectIndex]).removeClass('selected');
+              lsScope.selectIndex = Math.max(lsScope.selectIndex - 1, 0);
+              $(_list[lsScope.selectIndex]).addClass('selected');
+              break;
+            case 40:// down
+              $(_list[lsScope.selectIndex]).removeClass('selected');
+              lsScope.selectIndex = Math.min(lsScope.selectIndex + 1, _list.length - 1);
+              $(_list[lsScope.selectIndex]).addClass('selected');
+              break;
+            case 13: //enter
+              _list[lsScope.selectIndex].click();
+              break;
+          }
         });
         var junk = document.createElement('div');
         var req = new google.maps.places.PlacesService(junk);
@@ -824,6 +843,7 @@ angular.module('myApp.controllers', []).
       var bounds = $(ev.target).offset();
       bounds.bottom = bounds.top + ev.target.offsetHeight;
       bounds.right = bounds.left + ev.target.offsetWidth;
+
       ltsScope.$digest();
       lts_ce[0].style.top = bounds.bottom + "px";
       lts_ce[0].style.left = bounds.right - lts_ce[0].offsetWidth + "px";
@@ -834,6 +854,7 @@ angular.module('myApp.controllers', []).
       var e = ev.target,
           selector = document.getElementsByClassName('upload-location-selector')[0];
       var order = +e.dataset.itemOrder;
+      lsScope.selectIndex = 0;
       lsScope.show = true;
       lsScope.result = $scope.locTags[order].name + ' - ' + $scope.locTags[order].pos;
       lsScope.inputName = $scope.locTags[order].name;
@@ -847,6 +868,8 @@ angular.module('myApp.controllers', []).
       clonedElement[0].style.left = bounds.left - 22 + "px";
       ev.stopPropagation();
 
+      document.querySelector('.upload-location-selector .selector-input-pos').focus();
+      // 选择框被关闭
       $(document).one('click', function temp(ev) {
         if (!lsScope.show) return;
         var e = ev.target;
@@ -859,6 +882,7 @@ angular.module('myApp.controllers', []).
           }
           e = e.parentNode;
         }
+        $('.selector-results .select').removeClass('.select');
         lsScope.show = false;
         clonedElement[0]._bindElement = null;
         lsScope.$digest();

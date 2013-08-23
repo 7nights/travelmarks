@@ -115,25 +115,27 @@
       <div class="container">
         <h3 ng-bind-template='{{getModTitle()}}'></h3>
 
-        <div class="item first-child">
-          <strong>Title</strong>
-          <input type="text" ng-model="title" id="upload-title-input" />
-        </div>
-        <div class="item">
-          <strong>Location</strong>
-          <input type="text" id="upload-location-input" placeholder='input a place' ng-model="location" />
-          <div class="upload-location-hint">press enter to confirm</div>
-          <div class="location-tags-container">
-            <div class="location-tag" data-item-order="{{$index}}" ng-repeat="tag in locTags">
-              <span class="tag-name" ng-bind-template="{{tag.name}}"></span> - 
-              <span class="tag-pos" ng-bind-template="{{tag.pos}}"></span>
-            </div>
-            <div class="clear"></div>
+        <div class="form-container">
+          <div class="item first-child">
+            <strong>Title</strong>
+            <input type="text" ng-model="title" id="upload-title-input" />
           </div>
-        </div>
-        <div class="item">
-          <strong>Summary</strong>
-          <textarea class="custom-scrollbar" auto-height-textarea ng-model="summary"></textarea>
+          <div class="item">
+            <strong>Location</strong>
+            <input type="text" id="upload-location-input" placeholder='input a place' ng-model="location" />
+            <div class="upload-location-hint">press enter to confirm</div>
+            <div class="location-tags-container">
+              <div class="location-tag" data-item-order="{{$index}}" ng-repeat="tag in locTags">
+                <span class="tag-name" ng-bind-template="{{tag.name}}"></span> - 
+                <span class="tag-pos" ng-bind-template="{{tag.pos}}"></span>
+              </div>
+              <div class="clear"></div>
+            </div>
+          </div>
+          <div class="item">
+            <strong>Summary</strong>
+            <textarea class="custom-scrollbar" auto-height-textarea ng-model="summary"></textarea>
+          </div>
         </div>
         <br />
         <ul class="item-box">
