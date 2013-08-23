@@ -1226,7 +1226,7 @@ textarea{
 
 .clear-plexi{
   position: relative;
-  z-index: 1005;
+  z-index: 1005 !important;
 }
 .btn.btn-success:active {
   background-color: #CE655E;

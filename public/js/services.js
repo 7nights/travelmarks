@@ -567,6 +567,7 @@ angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
         $('#mod-' + coming).css({display: 'block', opacity: 0, '-webkit-transform': 'translateX(50px)'});
         setTimeout(function () {
           $('#mod-' + coming).css({'-webkit-transform': 'translateX(0px)', opacity: 1});
+          document.getElementById('mod-' + coming).style.removeProperty('-webkit-transform');
         }, 0);
         unload();
         setTimeout(function () {after();}, 300);
