@@ -168,6 +168,29 @@ angular.module('HashManager', []).provider('HashManager', function(){
 /* Services */
 angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
   value('version', '0.1').
+  provider('area', function () {
+    var oAreas = {};
+    /*
+     * area(name, description, scope)
+     * area(name, scope)
+     * area(name) return an area's exports
+     * area(scope) execute scope
+     */
+    function area(name, description, scope) {
+      if (arguments.length === 1 && typeof arguments[0] === 'string') { // get area exports
+        return oAreas[name];
+      } else if (arguments.length === 2) { // omit description
+        scope = description;
+        description = undefined;
+      }
+      var exports = {};
+      scope(exports);
+      typeof name === 'string' && (oAreas[name] = exports);
+    };
+    this.$get = function () {
+      return area;
+    };
+  }).
   provider('User', function () {
     var scope;
     angular.injector(['ng']).invoke(['$rootScope', function($rootScope, version){

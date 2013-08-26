@@ -27,7 +27,7 @@ exports.uploadImage = function(req, res, next) {
     path: file.path,
     oriname: file.name
   };
-  console.log(file.path);
+
   // resize image
   try {
     im.identify(file.path, function (err, f) {
