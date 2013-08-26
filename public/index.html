@@ -54,7 +54,7 @@
             </div>
             <div class="error" ng-bind-template="{{errorMessage}}" ng-show="errorMessage!=''"></div>
             <div class="desc"><a href="#" ng-click='signUp($event)' ng-bind-template='{{loginBoxDesc}}'>Sign up right now!</a></div>
-            <button id="login-btn" class="btn right" ng-bind-template='{{loginBtn}}' ng-click='submit()'>Sign In</button>
+            <button id="login-btn" ng-style='getOpacity()' class="btn right" ng-bind-template='{{loginBtn}}' ng-click='submit()'>Sign In</button>
           </div>
         </div>
       </div>

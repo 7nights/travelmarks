@@ -353,7 +353,7 @@ exports.savePicture = function (req, res, next) {
     }
     item = it;
 
-    utils.mkdirp(savepath, function () {
+    utils.mkdirp(savepath, function (err) {
       ep.emitLater('rename');
     });
   });

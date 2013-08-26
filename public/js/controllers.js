@@ -22,6 +22,12 @@ angular.module('myApp.controllers', []).
     var signupMode = false;
 
     // ---------- functions ----------
+    // sign 按钮的opacity
+    $scope.getOpacity = function () {
+      return {
+        opacity: ($scope.submiting?.3:1)
+      };
+    };
     // 改变模式(登录或注册)
     $scope.signUp = function (ev){
       if ($scope.submiting) return;
@@ -47,7 +53,6 @@ angular.module('myApp.controllers', []).
       // check input
       var REG_USERNAME = /^[^_]([a-zA-Z0-9\u4e00-\u9fa5]+_?)+[^_]$/;
       if (signupMode && !REG_USERNAME.test($scope.inputUsername)){
-        Util.notice('用户名非法', 10000000);
         return alert("用户名非法");
       }
       // TODO 各种验证
@@ -67,7 +72,6 @@ angular.module('myApp.controllers', []).
         return $scope.errorMessage = '请输入正确的电子邮箱'; 
       }
       $scope.submiting = true;
-      $('#login-btn').css('opacity', '.3');
 
       if (!signupMode) {
         $http({method: 'POST', url: '/signin', data: {
@@ -152,9 +156,18 @@ angular.module('myApp.controllers', []).
     // TODO: 设置一个缓存时间或者添加刷新按钮
     var cachedMarks;
     // ---------- functions ----------
-    area('define msry', function () {
+    area('ExploreCtrl.msry', 'define msry', function (exports) {
       var displayMode = 0,
-        msry;
+          msry;
+      exports.msry = {
+        get: function () {
+          return msry;
+        },
+        set: function (value) {
+          msry = value;
+        }
+      };
+
       function getMsry() {
         return $('.explore-container').masonry({
           itemSelector: '.explore-mark',
@@ -199,12 +212,13 @@ angular.module('myApp.controllers', []).
     ModManager.addListener('before', function (mod) {
       if (mod !== 'explore') return;
 
+      var msry = area('ExploreCtrl.msry').msry;
       // TODO
       if (cachedMarks) return;
-      if (msry) {
+      if (msry.get()) {
         displayMode = !displayMode;
-        msry.masonry('destroy');
-        msry = null;
+        msry.get().masonry('destroy');
+        msry.set(null);
         document.querySelector('.explore-container').classList.remove('tworows');
       }
 
@@ -501,8 +515,22 @@ angular.module('myApp.controllers', []).
           msry = null;
         }
       };
-      exports.mode2rows = mode2rows;
-      exports.msry = msry;
+      exports.mode2rows = {
+        get: function () {
+          return mode2rows;
+        },
+        set: function (val) {
+          mode2rows = val;
+        }
+      };
+      exports.msry = {
+        get: function () {
+          return msry;
+        },
+        set: function (val) {
+          msry = val;
+        }
+      };
     });
 
     // [view函数] 判断picture是否载入完毕，如果完毕view会显示picture应用动画
@@ -513,11 +541,11 @@ angular.module('myApp.controllers', []).
     // ---------- events ----------
     // 每次进入页面之后初始化
     ModManager.addListener('before', function (mod) {
-
-      area('UploadCtrl.msry').mode2rows = false;
-      if (area('UploadCtrl.msry').msry) {
-        area('UploadCtrl.msry').msry.masonry('destroy');
-        area('UploadCtrl.msry').msry = null;
+      var area_msry = area('UploadCtrl.msry');
+      area_msry.mode2rows.set(false);
+      if (area_msry.msry.get()) {
+        area_msry.msry.get().masonry('destroy');
+        area_msry.msry.set(null);
       }
       if (mod !== 'detail') {
         return;
@@ -1524,7 +1552,7 @@ angular.module('myApp.controllers', []).
             THROTTLE_CD = 300;
 
         lsScope.$watch('inputName', function (newVal, oldVal) {
-          if (!$scope.locTags) return;
+          if (!$scope.locTags || !lsScope.order) return;
           $scope.locTags[lsScope.order].name = newVal;
           $scope.$digest();
         });
