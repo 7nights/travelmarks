@@ -479,7 +479,7 @@ h6 {
   border: none;
   background: #B8B9B2;
   color: #ffffff;
-  padding: 9px 12px 10px;
+  padding: 0 10px;
   line-height: 22px;
   text-decoration: none;
   text-shadow: none;
@@ -494,6 +494,8 @@ h6 {
   -o-transition: 0.25s;
   transition: 0.25s;
   -webkit-backface-visibility: hidden;
+  line-height: 32px;
+  min-width: 60px;
 }
 .btn:hover,
 .btn:focus,

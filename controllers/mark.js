@@ -166,7 +166,7 @@ exports.getMark = function (req, res, next) {
  */
 exports.createItem = function (req, res, next) {
   if (!req.body.markId || !req.body.tag) {
-    res.json({status: -1, message: '输入不完整'});
+    return res.json({status: -1, message: '输入不完整'});
   }
   try {
     var markId = req.body.markId,
@@ -227,16 +227,23 @@ exports.deleteMark = function (req, res, next) {
 };
 /**
  * 删除一个item
- * @param {String} req.post.itemId
+ * @param {String} req.param.itemId
  */
 exports.deleteItem = function (req, res, next) {
-  var itemId = req.body.itemId;
+  var itemId = req.param('itemId');
   if (!itemId) {
     return res.json({status: -1, message: '非法请求'});
   }
-  Item.removeItemById(itemId, function (err) {
+
+  Item.getItemById(itemId, function (err, it) {
     if (err) return next(err);
-    res.json({status: 1, message: '删除成功'});
+    if (!it) return res.json({status: -1, message: '没找到这个item'});
+    if (it.author != req.session.user._id) return res.json({status: -1, message: '没有足够的权限'});
+    Picture.deletePictures(it.pictures);
+    it.remove(function (err) {
+      if (err) return next(err);
+      res.json({status: 1, message: '删除成功!'});
+    });
   });
 };
 /**
@@ -398,7 +405,8 @@ exports.savePicture = function (req, res, next) {
 
       Mark.getMarkById(item.markId, function (err, doc) {
         if (err) return;
-        if (!doc.cover) {
+        // TODO cover
+        if (1 || !doc.cover) {
           // TODO
           doc.cover = url;
           doc.save();

@@ -18,7 +18,8 @@
 </head>
 <body>
   <div class="nav" ng-controller="NavCtrl" ng-hide="hideNav">
-    <div class="logo left"><img src="img/text-logo.png" />Travel Marks</div>
+    <!-- <div class="logo left"><img src="img/text-logo.png" />Travel Marks</div> -->
+    <div class="logo logo-v2 left" ><img src="img/logo-white.png"></div>
     <div class="nav-a left">
       <a href="#explore" id="nav-btn-explore"><i class="icon-globe"></i> Explore</a>
       <a href="#home/refresh" id="nav-btn-home" class="active"><i class="icon-map-marker icon-white"></i>Marks</a>
@@ -244,10 +245,10 @@
             <a  href="#detail/{{it._id}}" ng-style="{'background-image': 'url(' + it.cover + ')'}"></a>
           </div>
         </div>
-        <div class="desc-wrap"><div class="desc">
+        <div class="desc-wrap"><div class="desc custom-scrollbar">
           <span class="right"><span class="light">marked by </span><img class="mark-avatar" ng-src="{{getAvatar(it.author_avatar)}}" /><strong ng-bind-template="{{it.author_name}}"></strong></span>
           <strong class="mark-location" ng-bind-template="{{it.title}}"></strong>
-          <div ng-bind-template="{{it.summary}}"></div>
+          <div class='mark-summary' ng-bind-template="{{it.summary}}"></div>
         </div>
       
       </li>

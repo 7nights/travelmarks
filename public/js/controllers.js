@@ -386,6 +386,10 @@ angular.module('myApp.controllers', []).
       }
     };
 
+    function formatDate(d) {
+      d = new Date(d);
+      return d.getMonth() + 1 + '-' + d.getDate() + '-' + d.getFullYear();
+    }
     // 从服务器获取到数据之后的处理函数
     var eatData = function (data) {
       if (data.status !== -1) {
@@ -399,6 +403,7 @@ angular.module('myApp.controllers', []).
         $scope.summary = data.summary;
         $scope.total = data.total;
         $scope.date = data.date;
+
         if ($scope.author === User.name) {
           $scope.editable = true;
         } else {
@@ -409,9 +414,10 @@ angular.module('myApp.controllers', []).
         $scope.items = [];
         data.items.forEach(function (val) {
           var it = Item.one();
+          it._id = val._id;
           it.post = val.post;
           it.title = val.title;
-          it.date = val.date;
+          it.date = formatDate(val.date);
           it.tag = val.tag;
           it.tag.uid = parseInt(Math.random() * 10000) + '' + parseInt(Math.random() * 10000);
 
@@ -435,14 +441,16 @@ angular.module('myApp.controllers', []).
             it.pictures.push(newPic);
           });
           $scope.items.push(it);
+
         });
+        lastData.items = $scope.items;
 
       }
     };
 
     // [事件函数] 编辑
     $scope.edit = function () {
-      
+      console.log(lastData);
       ModManager.setData(lastData);
       location.hash = 'upload/edit';
     };
@@ -587,7 +595,7 @@ angular.module('myApp.controllers', []).
     });
     // 清除cachedId
     $rootScope.$on('DetailCtrl.clearCache', function () {
-      cachedId = null; 
+      cachedId = null;
     });
     
   }]).
@@ -856,97 +864,215 @@ angular.module('myApp.controllers', []).
           // 所有tags建立完成
 
           // 判断是否有更新items, 如果有则修改
+          function getPictureUrls(arr) {
+            var a = [];
+            arr.forEach(function (val) {
+              if (typeof val === 'string') {
+                a.push(val);
+              } else if ('src' in val && val.src.indexOf('user_data') !== -1) {
+                a.push(val.src);
+              } else {
+                throw new Error('图片格式错误');
+              }
+            });
+            return a;
+          }
           var itemsUpdateCount = 0; // 有多少的items需要更新
-          $scope.items.forEach(function (val, i) {
-            // 是否需要更新item, 用于只修改了标题或者描述或者时间时, 标记item需要被修改
-            var updateItem = false,
-            // 当item里有新的图片需要上传时, 用以表示有多少图片正在等待上传
-                waitPicture = 0;
+          var checkItemsUpdate = function () {
+            
+            $scope.items.forEach(function (val) {
+              // 是否需要更新item, 用于只修改了标题或者描述或者时间时, 标记item需要被修改
+              var updateItem = false,
+              // 当item里有新的图片需要上传时, 用以表示有多少图片正在等待上传
+                  waitPicture = 0;
 
-            // 判断标题, 时间, 描述 是否被更改
-            if (val.title !== cachedItems[i].title ||
-              val.post !== cachedItems[i].post ||
-              new Date(val.date).getTime() !== new Date(cachedItems[i].date).getTime() ||
-              val.tag._id !== cachedItems[i].tag._id
-              ) {
-              updateItem = true;
-            }
-            // 是否有新图片
-            cachedItems[i].pictures.forEach(function (pic, j) {
-              if (pic !== val.pictures[j]) {
+              var i = getCachedItemsNo(val._id);
+
+              // 判断标题, 时间, 描述 是否被更改
+              if (!cachedItems[i] ||
+                val.title !== cachedItems[i].title ||
+                val.post !== cachedItems[i].post ||
+                new Date(val.date).getTime() !== new Date(cachedItems[i].date).getTime() ||
+                val.tag._id !== cachedItems[i].tag._id
+                ) {
+
                 updateItem = true;
               }
-            });
 
-            // 遍历图片数组找到需要新上传的图片
-            val.pictures.forEach(function (pic, j) {
-              if (typeof pic !== 'string') {
-                waitPicture++;
-                (function (index) {
-                  var fd = new FormData();
-                  fd.append('image', pic.file);
-                  fd.append('itemId', val._id);
-                  var xhr = new XMLHttpRequest();
-                  xhr.open('POST', '/picture/save');
-                  xhr.onload = function () {
-                    var result = JSON.parse(xhr.response);
-                    if (result.status === -1) {
-                      // TODO
-                      alert('上传失败');
-                    }
-                    val.pictures[index] = result.data.url;
-                    // 上传完成后, 减少一个正在等待上传的图片: waitPicture--
-                    finishPicture();
-                  };
-                  xhr.send(fd);
-                })(j);
+              // 是否有新图片
+              if (cachedItems[i] && cachedItems[i].pictures) {
+                cachedItems[i].pictures.forEach(function (pic, j) {
+                  if (pic !== val.pictures[j]) {
+                    updateItem = true;
+                  }
+                });
+              }
+
+              // 遍历图片数组找到需要新上传的图片
+              val.pictures.forEach(function (pic, j) {
+                console.log('src' in pic, val.pictures);
+                if (typeof pic !== 'string' && (!('loaded' in pic))) {
+                  console.log(pic, val.pictures, j);
+                  waitPicture++;
+                  (function (index) {
+                    var fd = new FormData();
+                    fd.append('image', pic.file);
+                    fd.append('itemId', val._id);
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/picture/save');
+                    xhr.onload = function () {
+                      var result = JSON.parse(xhr.response);
+                      if (result.status === -1) {
+                        // TODO
+                        return alert('上传失败');
+                      }
+                      val.pictures[index] = result.data.url;
+                      // 上传完成后, 减少一个正在等待上传的图片: waitPicture--
+                      finishPicture();
+                    };
+                    xhr.send(fd);
+                  })(j);
+                }
+              });
+
+              // 如果这个item需要更新, 则将需要做的更新计数器+1
+              if (updateItem || waitPicture) {
+                itemsUpdateCount++;
+                totalUpdateCount++;
+              }
+              // 减少一个正在上传的图片, 如果所有图片上传完成, 则下一步: 更新item
+              var finishPicture = function () {
+                if (--waitPicture > 0) return;
+                doUpdateItem();
+              },
+              // 更新item
+              doUpdateItem = function () {
+                $http({
+                  method: 'post',
+                  url: 'item/alter',
+                  data: {
+                    _id: val._id,
+                    post: val.post,
+                    tag: val.tag._id || val.tag.id,
+                    title: val.title,
+                    pictures: getPictureUrls(val.pictures),
+                    date: val.date
+                  }
+                }).
+                success(function (data) {
+                  if (data.status === 1) {
+                    finishTotalUpdate();
+                    doFinishItems();
+                  }
+                });
+              };
+
+              // 如果没有新上传的图片又需要更新item, 则直接做更新item操作
+              // 因为如果有新的图片需要上传, 需要等到所有图片上传完成, 并拿到这些图片的地址后, 才能更新item
+              if (!waitPicture && updateItem) {
+                doUpdateItem();
+              }
+
+            });
+          };
+
+          // 删除items
+          var deleteItems = function (callback) {
+            var deleted = [];
+
+            cachedItems.forEach(function (val) {
+              var id = val._id,
+                  found = false;
+              $scope.items.forEach(function (_val) {
+                if (_val._id === id) {
+                  found = true;
+                }
+              });
+              if (!found) {
+                deleted.push(val);
               }
             });
 
-            // 如果这个item需要更新, 则将需要做的更新计数器+1
-            if (updateItem || waitPicture) {
-              itemsUpdateCount++;
-              totalUpdateCount++;
-            }
-            // 减少一个正在上传的图片, 如果所有图片上传完成, 则下一步: 更新item
-            var finishPicture = function () {
-              if (--waitPicture > 0) return;
-              doUpdateItem();
-            },
-            // 更新item
-            doUpdateItem = function () {
+            var length = deleted.length;
+            // delete request
+            deleted.forEach(function (val) {
               $http({
-                method: 'post',
-                url: 'item/alter',
+                method: 'GET',
+                url: 'item/delete?itemId=' + val._id
+              }).success(function () {
+                if (--length <= 0) {
+                  typeof callback === 'function' && callback();
+                }
+              }).error(function () {
+                alert('Error occured');
+                return $scope.uploading = false;
+              });
+            });
+          };
+
+          // 判断是否有新的item需要创建
+          // TODO 删除items
+          deleteItems();
+          var sq = new Utils.syncQueue();
+          $scope.items.forEach(function (val, i) {
+            if ('_id' in val) {
+              return;
+            }
+            totalUpdateCount++;
+            sq.push(function (args, next) {
+              var tag = $scope.items[i].tag;
+              $http({
+                method: 'POST',
+                url: 'item/create',
                 data: {
-                  _id: val._id,
-                  post: val.post,
-                  tag: val.tag._id || val.tag.id,
-                  title: val.title,
-                  pictures: val.pictures,
-                  date: val.date
+                  markId: $scope.id,
+                  date: new Date($scope.items[i].date).getTime(),
+                  post: $scope.items[i].post,
+                  title: $scope.items[i].title,
+                  tag: tag.id
                 }
               }).
               success(function (data) {
+                finishTotalUpdate();
                 if (data.status === 1) {
-                  finishTotalUpdate();
-                  doFinishItems();
+                  $scope.items[i]._id = data.data.itemId;
+                  next(null, data.data.itemId);
                 }
+              }).
+              error(function () {
+                finishTotalUpdate();
+                $scope.uploading = false;
+                next(new Error('Upload failed.'));
               });
-            };
-
-            // 如果没有新上传的图片又需要更新item, 则直接做更新item操作
-            // 因为如果有新的图片需要上传, 需要等到所有图片上传完成, 并拿到这些图片的地址后, 才能更新item
-            if (!waitPicture && updateItem) {
-              doUpdateItem();
-            }
-
+            });
           });
+          sq.push(function (args, next) {
+            args && next;
+            checkItemsUpdate();
+          }).
+          exec();
+
+          function getCachedItemsNo(id) {
+            var result = null;
+            cachedItems.forEach(function (val, i) {
+              if (result) return;
+              if (val._id === id) result = i;
+            });
+            
+            if (result === null) return -1;
+            return result;
+          }
 
           function doFinishItems() {
             if (--itemsUpdateCount > 0) return;
           }
         };
+
+        if (totalUpdateCount <= 0) {
+          debugger;
+          history.back();
+          $scope.uploading = false;
+        }
 
         // 开始执行更新队列
         funcs.forEach(function (val) {
@@ -1011,6 +1137,7 @@ angular.module('myApp.controllers', []).
           success(function (data) {
             if (data.status === 1) {
               t.tagId = data.data.tagId;
+              t.id = data.data.tagId;
               next(null, t.tagId);
             }
           }).

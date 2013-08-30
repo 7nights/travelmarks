@@ -53,6 +53,8 @@
 .nav-buttons a{
   text-decoration: none;
   vertical-align: middle;
+  position: relative;
+  top: -1px;
 }
 .nav-a a{
   text-decoration: none;
@@ -96,12 +98,22 @@
   /* font-size: 20px; */
   font-weight: normal;
 }
+.nav .logo-v2 {
+  background-color: #C7C7C7;
+  margin-left: -10px;
+  padding: 0 10px;
+  font-size: 12px;
+}
 .nav .logo > img{
   vertical-align: middle;
   position: relative;
   top: -3px;
   margin-right: 6px;
   height: 22px;
+}
+.nav .logo-v2 > img {
+  margin-right: 0;
+  top: 0;
 }
 .container{
   width: 900px;
@@ -257,7 +269,7 @@ textarea{
 }
 #mod-upload .item.focus{
   background: #F3F1E7;
-  box-shadow: 0 0px 2px 0px rgba(150, 150, 150, 0.1);
+  /* box-shadow: 0 0px 2px 0px rgba(150, 150, 150, 0.1); */
   /* overflow: visible; */
   z-index: 5;
   position: relative;
@@ -282,7 +294,7 @@ textarea{
   float: right;
 }
 #mod-detail .top-wrapper{
-  margin-left: 10px;
+  /* margin-left: 10px; */
 }
 
 #mod-detail .container .wrap-padding {
@@ -791,6 +803,7 @@ background-image: url(../img/test.png);
 #mod-home .buttons .btn{
   border-bottom: 3px solid #C97570;
   background-color: #E68983;
+  line-height: 41px;
 }
 #mod-home .buttons .btn:hover{
   border-bottom: 3px solid #F3A8A8;
@@ -855,6 +868,10 @@ background-image: url(../img/test.png);
   border-radius: 2px;
   border: 1px solid #8CD7EE;
   overflow: hidden;
+}
+.explore-mark .desc {
+  max-height: 100px;
+  overflow: auto;
 }
 .explore-mark:hover .desc-wrap{
   opacity: 1;
@@ -1151,6 +1168,10 @@ ul{
 input,
 textarea{
   font-family: Lato, '微软雅黑' !important;
+}
+
+textarea {
+  min-height: 65px;
 }
 
 .date-picker th{

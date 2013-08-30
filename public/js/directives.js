@@ -21,7 +21,7 @@ angular.module('myApp.directives', []).
       element[0].addEventListener('input', resize);
       element[0].addEventListener('click', resize);
       element[0].addEventListener('blur', function (ev) {
-        $(ev.target).height(80);
+        $(ev.target).height(65);
       });
     };
   }).

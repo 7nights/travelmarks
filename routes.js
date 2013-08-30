@@ -23,6 +23,7 @@ module.exports = function (app) {
   // item
   app.post('/item/create', auth, mark.createItem);
   app.post('/item/alter', auth, mark.alterItem);
+  app.get('/item/delete', auth, mark.deleteItem);
 
   // picture
   app.post('/picture/save', auth, upload.uploadImage, mark.savePicture);
