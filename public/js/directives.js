@@ -83,4 +83,35 @@ angular.module('myApp.directives', []).
 
       }, false);
     };
+  }]).
+  directive('customSelect', ['$compile', function ($compile) {
+    return function (scope, element, attrs) {
+     var options = scope.$eval(attrs.options);
+     var ul = document.createElement('ul');
+     ul.className = 'custom-select-list';
+     var displayBox = document.createElement('div');
+     displayBox.className = 'custom-select-selected';
+     var list = [];
+     element[0].appendChild(displayBox);
+     element[0].appendChild(ul);
+     options.forEach(function (val) {
+      var e = document.createElement('li');
+      e.innerHTML = val.value;
+      e.dataset.optionCode = val.code;
+      ul.appendChild(e);
+      e.addEventListener('click', function () {
+        scope[attrs.selectModel] = val;
+        scope.$digest();
+        displayBox.innerHTML = val.value;
+      });
+     });
+     var ds = attrs.defaultSelect || 0;
+     displayBox.innerHTML = options[ds].value;
+     scope[attrs.selectModel] = options[ds];
+    };
+  }]).
+  directive('loadingAnimation', [function () {
+    return function (scope, element, attrs) {
+
+    };
   }]);

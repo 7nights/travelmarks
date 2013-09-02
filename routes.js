@@ -27,6 +27,7 @@ module.exports = function (app) {
 
   // picture
   app.post('/picture/save', auth, upload.uploadImage, mark.savePicture);
+  app.post('/picture/save/base64', auth, mark.savePicture);
 
   // tag
   app.post('/tag/create', auth, mark.createTag);

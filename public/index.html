@@ -79,7 +79,7 @@
           </div>
           <a href="#upload"><button class="btn">Create a New Mark</button></a>
         </div>
-        <div class="desc left"><span class="big-num" ng-bind-template="{{totalMarks}}">0</span> marks and <span class="big-num" ng-bind-template="{{totalPictures}}">0</span> pictures.</div>
+        <div class="desc left"><span class="big-num" ng-bind-template="{{totalMarks}}">0</span> <span ng-pluralize count="totalMarks" when="{'0': 'oops, no mark available', '1': 'mark', 'other': 'marks'}">marks</span> and <span class="big-num" ng-bind-template="{{totalPictures}}">0</span> <span ng-pluralize count="totalPictures" when="{'0': ': ( you have not uploaded pictures yet.', '1': 'picture', 'other': 'pictures'}">pictures.</span></div>
         <div class="clear"></div>
       </div>
     </div>
@@ -115,6 +115,9 @@
     <div class="wrap-padding">
       <div class="container">
         <h3 ng-bind-template='{{getModTitle()}}'></h3>
+        <div class="loading-animation" ng-show='uploading'>
+          <span>.</span><span>.</span><span>.</span>
+        </div>
 
         <div class="form-container">
           <div class="item first-child">
@@ -139,6 +142,12 @@
           </div>
         </div>
         <br />
+        <div class="picture-quality">
+          <span>Picture quality: </span>
+          <div custom-select default-select="1" select-model="quality" class="custom-select" options="[{'code': 0, 'value': 'High'}, {'code': 1, 'value': 'Good'}, {'code': 2, 'value': 'Original'}]">
+          </div>
+        </div>
+        <div class="clear"></div>
         <ul class="item-box">
           <li ng-repeat="it in items" data-item-no="{{$index}}">
             
@@ -183,7 +192,7 @@
               <span class="author" ng-bind-template="@{{author}}"></span>
             </div>
             
-            <div class="total-pictures"><span ng-bind-template="{{total}}"></span>pictures<br /><span ng-bind-template="{{dateFilter(date, 0)}}" class="date"></span></div>
+            <div class="total-pictures"><span ng-bind-template="{{total}}"></span><i ng-pluralize count="total" when="{'0': ': ( no picture available.', '1': 'picture', 'other': 'pictures'}">pictures.</i><br /><span ng-bind-template="{{dateFilter(date, 0)}}" class="date"></span></div>
           </div>
           <div class="clear"></div>
      
@@ -191,14 +200,14 @@
             <!--<div class="location" ng-bind-template="{{location}}"></div>-->
             <div class="read" ng-bind-template="{{read}}"></div>
             <div class="buttons">
-              <div class="edit" ng-click="edit()" ng-show="editable">✎</div>
-              <div class="remove" ng-click="remove()" ng-show="editable"><i class="icon-white icon-remove"></i></div>
-              <div class="collect">❤</div>
-              <div class="mode" ng-click="switchMode()"></div>
+              <div title="Edit" class="edit" ng-click="edit()" ng-show="editable">✎</div>
+              <div title="Delete" class="remove" ng-click="remove()" ng-show="editable"><i class="icon-white icon-remove"></i></div>
+              <div title="Like" class="collect">❤</div>
+              <div title="Switch display mode" class="mode" ng-click="switchMode()"></div>
             </div>
           </div>
           <div class="clear"></div>
-          <div class="summary" ng-bind-template="{{wordWrap(summary)}}"></div>
+          <div class="summary" ng-bind-template="{{summary}}"></div>
         </div>
         <br />
         <ul class="item-box" ng-class="getMode()">

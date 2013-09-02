@@ -464,6 +464,72 @@ angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
       return _method;
     }();
 
+    /**
+     * 图片压缩
+     */
+    var getCompressedImage = function (img, quality, type) {
+      var image,
+          canvas,
+          ctx;
+      if (!type) {
+        type = 'image/jpeg';
+      }
+      if (typeof img === 'string') {
+        image = new Image();
+        image.src = img;
+        if (!image.complete) {
+          alert('Please enable browser cache!');
+          return null;
+        }
+      }
+      switch(quality) {
+        case 2: // original
+          return img;
+        case 0: // high <= 1440
+          var height = image.height,
+              width = image.width;
+          if (height >= width && height > 1440) {
+            var scale = height / 1440;
+            height = 1440;
+            width /= scale;
+          } else if (width > height && width > 1440) {
+            var scale = width / 1440;
+            height /= scale;
+            width = 1440;
+          }
+          canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          ctx = canvas.getContext('2d');
+          ctx.drawImage(image, 0, 0, width, height);
+          if (type === 'image/jpeg') {
+            return canvas.toDataURL(type, .75);
+          }
+          return canvas.toDataURL(type);
+        case 1: // good <= 1024
+          var height = image.height,
+              width = image.width;
+          if (height >= width && height > 1024) {
+            var scale = height / 1024;
+            height = 1024;
+            width /= scale;
+          } else if (width > height && width > 1024) {
+            var scale = width / 1024;
+            height /= scale;
+            width = 1024;
+          }
+          canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          ctx = canvas.getContext('2d');
+          ctx.drawImage(image, 0, 0, width, height);
+          if (type === 'image/jpeg') {
+            return canvas.toDataURL(type, .75);
+          }
+          return canvas.toDataURL(type);
+      }
+    };
+
     var settings = function () {
       var NAMESPACE = 'jxoq532nm#$d';
       var listeners = [];
@@ -534,7 +600,8 @@ angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
       notice: notice,
       getDatePicker: getDatePicker,
       plexi: plexi,
-      settings: settings
+      settings: settings,
+      getCompressedImage: getCompressedImage
     };
     this.$get = function(){
       return exports;
@@ -554,10 +621,13 @@ angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
           };
         },
         picture: function (src, file) {
+          var img = new Image();
+          img.src = src;
           return {
             'src': src,
             'progress': 0,
-            'file': file
+            'file': file,
+            'img': img
           }
         }
       };

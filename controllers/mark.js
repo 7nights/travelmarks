@@ -338,11 +338,17 @@ exports.alterItem = function (req, res, next) {
 /**
  * 向item添加图片的请求
  * @param {String} req.body.itemId 目标item id
+ * @param {String} req.body.type 'base64' || 'file'
  */
 exports.savePicture = function (req, res, next) {
   var file = req.session.lastUploadedImage,
-      user_id = req.session.user._id;
-  if(!file) return req.json({status: -1, message: '上传文件失败'});
+      user_id = req.session.user._id,
+      oriname;
+  req.session.lastUploadedImage = null;
+  if (!file && req.body.type !== 'base64') return res.json({status: -1, message: '上传文件失败'});
+  if (!file && req.body.type === 'base64' && !req.body.image) {
+    return res.json({status: -1, message: '上传文件失败'});
+  }
 
   // 将图片保存到以用户id为名字的文件夹里
   var savepath = path.join(config.upload_dir, user_id, 'pictures');
@@ -352,7 +358,7 @@ exports.savePicture = function (req, res, next) {
 
   Item.getItemById(req.body.itemId, function (err, it) {
     if (err) return next(err);
-    if(!it) {
+    if(!it && file) {
       fs.unlink(file.path, function (err) {
         if (err) return next(err);
       });
@@ -375,14 +381,26 @@ exports.savePicture = function (req, res, next) {
   url = url.substr('public/'.length);
 
   ep.once('rename', function () {
-    fs.rename(file.path, realPath, function (err) {
-      if (err) return next(err);
-      ep.emitLater('savemodel');
-    });
+    if (req.body.type === 'base64') {
+    // 如果类型为base64转码并写入文件
+      oriname = req.body.oriname;
+      var buf = new Buffer(req.body.image, 'base64');
+      fs.writeFile(realPath, buf, function (err) {
+        if (err) return next(err);
+        ep.emitLater('savemodel');
+      });
+    } else {
+    // 如果类型为file则直接重命名临时文件
+      oriname = file.oriname;
+      fs.rename(file.path, realPath, function (err) {
+        if (err) return next(err);
+        ep.emitLater('savemodel');
+      });
+    }
   });
 
   ep.once('savemodel', function () {
-    Picture.savePicture(url, file.oriname, 0, user_id, function (err, doc) {
+    Picture.savePicture(url, oriname, 0, user_id, function (err, doc) {
       if (err) return next(err);
       ep.emit('savetoitem', doc);
     });

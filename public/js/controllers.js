@@ -350,7 +350,7 @@ angular.module('myApp.controllers', []).
     });
 
   }]).
-  controller('DetailCtrl', ['$scope', '$http', 'HashManager', 'ModManager', 'User', '$rootScope', 'area', function ($scope, $http, HashManager, ModManager, User, $rootScope, area) {
+  controller('DetailCtrl', ['$scope', '$http', 'HashManager', 'ModManager', 'User', '$rootScope', 'area', 'Util', function ($scope, $http, HashManager, ModManager, User, $rootScope, area, Util) {
     // ---------- initialize ----------
     // 最后一次从服务器获得的数据
     var lastData;
@@ -450,7 +450,6 @@ angular.module('myApp.controllers', []).
 
     // [事件函数] 编辑
     $scope.edit = function () {
-      console.log(lastData);
       ModManager.setData(lastData);
       location.hash = 'upload/edit';
     };
@@ -789,11 +788,13 @@ angular.module('myApp.controllers', []).
         var funcs = [];
 
         // 所有需要做的更改的计数
-        var totalUpdateCount = 0;
+        var totalUpdateCount = 0,
+        // 更新item为最后一步，需要最后一步为true才能表示totalUpdateCount做完,
+            lastStep = false;
 
         // 完成一个更改, 将更改计数-1, 并判断是否已经执行完所有更改
         var finishTotalUpdate = function () {
-          if (--totalUpdateCount > 0) return;
+          if (--totalUpdateCount > 0 || !lastStep) return;
           $scope.$emit('DetailCtrl.clearCache');
           location.hash = 'detail/' + $scope.id;
           $scope.uploading = false;
@@ -813,7 +814,7 @@ angular.module('myApp.controllers', []).
                 summary: $scope.summary
               }
             }).success(function () {
-              finishTotalUpdate();
+              finishTotalUpdate('mark change');
             });
           });
         }
@@ -849,9 +850,11 @@ angular.module('myApp.controllers', []).
               decreasePromises();
             });
             promises++;
+            //totalUpdateCount++;
           });
           if (newTags.length === 0) {
             decreasePromises();
+
           }
         });
 
@@ -910,16 +913,31 @@ angular.module('myApp.controllers', []).
 
               // 遍历图片数组找到需要新上传的图片
               val.pictures.forEach(function (pic, j) {
-                console.log('src' in pic, val.pictures);
                 if (typeof pic !== 'string' && (!('loaded' in pic))) {
-                  console.log(pic, val.pictures, j);
+                  
                   waitPicture++;
                   (function (index) {
                     var fd = new FormData();
-                    fd.append('image', pic.file);
+
+                    var url = 'picture/save',
+                        uploadType = 'file';
+                    // 如果没有达到需要压缩的大小则直接上传
+                    if (($scope.quality.code === 1 && Math.max(pic.img.width, pic.img.height) > 1440) ||
+                      ($scope.quality.code === 0 && Math.max(pic.img.width, pic.img.height)) > 1024) {
+                      var img = Util.getCompressedImage(pic.src, $scope.quality.code, pic.file.type);
+                      uploadType = 'base64';
+                      window.test = img;
+                      fd.append('image', img.substr(img.indexOf('base64,') + 'base64,'.length));
+                      fd.append('oriname', pic.file.name);
+                      url += '/base64';
+                    } else {
+                      fd.append('image', pic.file);
+                    }
+                    
+                    fd.append('type', uploadType);
                     fd.append('itemId', val._id);
                     var xhr = new XMLHttpRequest();
-                    xhr.open('POST', '/picture/save');
+                    xhr.open('POST', url);
                     xhr.onload = function () {
                       var result = JSON.parse(xhr.response);
                       if (result.status === -1) {
@@ -940,6 +958,9 @@ angular.module('myApp.controllers', []).
                 itemsUpdateCount++;
                 totalUpdateCount++;
               }
+
+              lastStep = true;
+              
               // 减少一个正在上传的图片, 如果所有图片上传完成, 则下一步: 更新item
               var finishPicture = function () {
                 if (--waitPicture > 0) return;
@@ -961,7 +982,7 @@ angular.module('myApp.controllers', []).
                 }).
                 success(function (data) {
                   if (data.status === 1) {
-                    finishTotalUpdate();
+                    finishTotalUpdate('picture');
                     doFinishItems();
                   }
                 });
@@ -1033,7 +1054,7 @@ angular.module('myApp.controllers', []).
                 }
               }).
               success(function (data) {
-                finishTotalUpdate();
+                finishTotalUpdate('create item');
                 if (data.status === 1) {
                   $scope.items[i]._id = data.data.itemId;
                   next(null, data.data.itemId);
@@ -1068,11 +1089,13 @@ angular.module('myApp.controllers', []).
           }
         };
 
-        if (totalUpdateCount <= 0) {
-          debugger;
-          history.back();
-          $scope.uploading = false;
-        }
+        setTimeout(function() {
+
+          if (totalUpdateCount <= 0 && $scope.uploading && promises <= 0 && location.hash === '#upload/edit') {
+            history.back();
+            $scope.uploading = false;
+          }
+        }, 300);
 
         // 开始执行更新队列
         funcs.forEach(function (val) {
@@ -1188,13 +1211,27 @@ angular.module('myApp.controllers', []).
       function uploadPicture(itemId, pic, _i) {
       
         sq.push(function (args, next) {
-          console.log('upload picture');
           var itemId = args;
           var fd = new FormData();
-          fd.append('image', pic.file);
+          var uploadType = 'file';
+          var url = '/picture/save';
+
+          // 如果没有达到需要压缩的大小则直接上传
+          if (($scope.quality.code === 1 && Math.max(pic.img.width, pic.img.height) > 1440) ||
+            ($scope.quality.code === 0 && Math.max(pic.img.width, pic.img.height)) > 1024) {
+            var img = Util.getCompressedImage(pic.src, $scope.quality.code, pic.file.type);
+            uploadType = 'base64';
+            window.test = img;
+            fd.append('image', img.substr(img.indexOf('base64,') + 'base64,'.length));
+            fd.append('oriname', pic.file.name);
+            url += '/base64';
+          } else {
+            fd.append('image', pic.file);
+          }
+          fd.append('type', uploadType);
           fd.append('itemId', itemId);
           var xhr = new XMLHttpRequest();
-          xhr.open('POST', '/picture/save');
+          xhr.open('POST', url);
           xhr.onload = function () {
             var result = JSON.parse(xhr.response);
             if (result.status === -1) {
