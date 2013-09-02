@@ -957,7 +957,7 @@ background-image: url(../img/test.png);
   overflow: hidden;
 }
 .img-inner-wrap > a {
-  background-size: 100% auto;
+  background-size: cover;
   background-position: 50%;
   width: 100%;
   height: 100%;
