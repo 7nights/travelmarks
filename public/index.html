@@ -113,7 +113,7 @@
   <section class="mod" id="mod-upload" ng-class="ifUploading()" ng-controller="UploadCtrl">
     <input type="file" class="upload-input" ng-change="fileChange()" ng-model="inputFile" />
     <div class="wrap-padding">
-      <div class="container">
+      <div class="container position-holder">
         <h3 ng-bind-template='{{getModTitle()}}'></h3>
         <div class="loading-animation" ng-show='uploading'>
           <span>.</span><span>.</span><span>.</span>

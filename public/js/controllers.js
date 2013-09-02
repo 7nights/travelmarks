@@ -1646,6 +1646,7 @@ angular.module('myApp.controllers', []).
       fr.onload = function () {
         $scope.items[currentUploadTarget].pictures.push(Item.picture(this.result, ev.target.files[0]));
         $scope.$digest();
+        angular.element('.upload-input')[0].value = null;
       };
       fr.readAsDataURL(ev.target.files[0]);
     }, false);

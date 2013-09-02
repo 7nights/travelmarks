@@ -555,7 +555,7 @@ background-image: url(../img/test.png);
 .upload-pictures-list{
   float: left;
   max-height: 140px;
-  max-width: 212px;
+  max-width: 211px;
   overflow: hidden;
   padding: 0 4px;
   position: relative;
@@ -649,14 +649,40 @@ background-image: url(../img/test.png);
   }
 }
 
+.position-holder {
+  position: relative;
+}
+.loading-animation {
+  position: absolute;
+  right: 10px;
+  line-height: 40px;
+  top: 10px;
+  font-size: 20px;
+  font-weight: bold;
+}
+.loading-animation > span {
+  display: inline-block;
+  -webkit-animation-iteration-count: infinite;
+  -webkit-animation-name: loading;
+  -webkit-animation-duration: 2.0s;
+}
+.loading-animation > span:first-child {
+  -webkit-animation-delay: .5s;
+}
+.loading-animation > span:nth-child(2) {
+  -webkit-animation-delay: .7s;
+}
+.loading-animation > span:last-child {
+  -webkit-animation-delay: .9s;
+}
 @-webkit-keyframes loading {
   0% {
     -webkit-transform: translate3d(0, 0, 0);
   }
-  40% {
+  12% {
     -webkit-transform: translate3d(0, -10px, 0);
   }
-  100% {
+  24% {
     -webkit-transform: translate3d(0, 0, 0);
   }
 }
