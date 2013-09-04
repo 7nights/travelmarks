@@ -1512,6 +1512,8 @@ angular.module('myApp.controllers', []).
         $('.selector-results .select').removeClass('.select');
         lsScope.show = false;
         clonedElement[0]._bindElement = null;
+        $scope.locTags[lsScope.order].name = lsScope.inputName;
+        $scope.$digest();
         lsScope.$digest();
       });
     });
@@ -1569,6 +1571,50 @@ angular.module('myApp.controllers', []).
         ev.preventDefault();
         return false;
       }, false);
+
+      // 拖动图片事件
+      $(document).delegate('.upload-pictures', 'drop', function (ev) {
+        var files = ev.originalEvent.dataTransfer.files;
+        for(var i = 0, length = files.length; i < length; i++ ) {
+          if (files[i].type.indexOf('image') === -1) continue;
+          ev.preventDefault();
+          /*var fr = new FileReader();
+          fr._file = files[i];
+          fr.onload = function () {
+            $scope.items[getItemOrder(ev.target)].pictures.push(Item.picture(this.result, this._file));
+            $scope.$digest();
+          };
+          fr.readAsDataURL(files[i]);*/
+          var worker = new Worker('js/worker-file-reader.js');
+          worker._file = files[i];
+          worker.addEventListener('message', function (e) {
+            var canvas = document.createElement('canvas'),
+                ctx = canvas.getContext('2d'),
+                img = new Image();
+            img.src = e.data;
+            /*function drawImage() {
+              console.log(img);
+              ctx.drawImage(0, 0, img);
+              return postMessage(canvas.toDataURL());
+            }
+            if (img.complete) {
+              drawImage();
+            } else {
+              img.onload = drawImage;
+            }*/
+            canvas.width = 220;
+            canvas.height = 140;
+            $scope.items[getItemOrder(ev.target)].pictures.push(Item.picture(e.data, this._file));
+            $scope.$digest();
+          });
+          worker.postMessage({file: files[i], method: 'readAsDataURL'});
+          //testExif(files[i], ev.target);
+        }
+        document.body.classList.remove('dragenter');
+        set = false;
+        ev.preventDefault();
+      });
+
     });
 
     // focus处理，包括对焦点元素添加highlight背景等
@@ -1608,48 +1654,6 @@ angular.module('myApp.controllers', []).
       });
     });
 
-    // 拖动图片事件
-    $(document).delegate('.upload-pictures', 'drop', function (ev) {
-      var files = ev.originalEvent.dataTransfer.files;
-      for(var i = 0, length = files.length; i < length; i++ ) {
-        if (files[i].type.indexOf('image') === -1) continue;
-        ev.preventDefault();
-        /*var fr = new FileReader();
-        fr._file = files[i];
-        fr.onload = function () {
-          $scope.items[getItemOrder(ev.target)].pictures.push(Item.picture(this.result, this._file));
-          $scope.$digest();
-        };
-        fr.readAsDataURL(files[i]);*/
-        var worker = new Worker('js/worker-file-reader.js');
-        worker._file = files[i];
-        worker.addEventListener('message', function (e) {
-          var canvas = document.createElement('canvas'),
-              ctx = canvas.getContext('2d'),
-              img = new Image();
-          img.src = e.data;
-          /*function drawImage() {
-            console.log(img);
-            ctx.drawImage(0, 0, img);
-            return postMessage(canvas.toDataURL());
-          }
-          if (img.complete) {
-            drawImage();
-          } else {
-            img.onload = drawImage;
-          }*/
-          canvas.width = 220;
-          canvas.height = 140;
-          $scope.items[getItemOrder(ev.target)].pictures.push(Item.picture(e.data, this._file));
-          $scope.$digest();
-        });
-        worker.postMessage({file: files[i], method: 'readAsDataURL'});
-        //testExif(files[i], ev.target);
-      }
-      document.body.classList.remove('dragenter');
-      set = false;
-      ev.preventDefault();
-    });
 
     // 用于读取文件的input内容被更改了，做相应的处理
     // TODO: 这样的事件用户重复选择文件就不会起效果
