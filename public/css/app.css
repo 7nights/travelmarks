@@ -1304,12 +1304,16 @@ textarea {
   background-color: #CE655E;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.15);
   box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.1),inset 0 -1px 0 rgba(0, 0, 0, 0.07);
 }
 .custom-scrollbar::-webkit-scrollbar {
-  width: 12px;
-  height: 16px;
+  width: 10px;
+  height: 10px;
+}
+.custom-scrollbar-large::-webkit-scrollbar {
+  width: 13px;
+  height: 13px;
 }
 .custom-scrollbar::-webkit-scrollbar-button {
   width: 0;
@@ -1326,10 +1330,14 @@ textarea {
   position: relative;
   padding: 2px 4px;
   border-radius: 2px;
+  cursor: pointer;
 }
-.custom-select:hover ul {
+
+.custom-select:hover ul,
+.custom-select.hover ul {
   display: block;
 }
+
 .custom-select ul {
   position: absolute;
   z-index: 1000;

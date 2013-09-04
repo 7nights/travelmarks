@@ -341,10 +341,10 @@ exports.alterItem = function (req, res, next) {
  * @param {String} req.body.type 'base64' || 'file'
  */
 exports.savePicture = function (req, res, next) {
-  var file = req.session.lastUploadedImage,
+  var file = req.lastUploadedImage,
       user_id = req.session.user._id,
       oriname;
-  req.session.lastUploadedImage = null;
+  req.lastUploadedImage = null;
   if (!file && req.body.type !== 'base64') return res.json({status: -1, message: '上传文件失败'});
   if (!file && req.body.type === 'base64' && !req.body.image) {
     return res.json({status: -1, message: '上传文件失败'});
@@ -389,6 +389,11 @@ exports.savePicture = function (req, res, next) {
         if (err) return next(err);
         ep.emitLater('savemodel');
       });
+      if (file) {
+        fs.unlink(file.path, function (err) {
+          if (err) return next(err);
+        });
+      }
     } else {
     // 如果类型为file则直接重命名临时文件
       oriname = file.oriname;

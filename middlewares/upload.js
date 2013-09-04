@@ -23,7 +23,7 @@ exports.uploadImage = function(req, res, next) {
   }
   var file = req.files && req.files.image;
   if (!file) return res.json({ status: -1, message: '请添加图片' });
-  req.session.lastUploadedImage = {
+  var result = {
     path: file.path,
     oriname: file.name
   };
@@ -42,15 +42,18 @@ exports.uploadImage = function(req, res, next) {
         opt.height = 1920;
       }
       if (!opt.width && !opt.height) {
+        req.lastUploadedImage = result;
         return next();
       }
       im.resize(opt, function (err) {
         if (err) return next(err);
+        req.lastUploadedImage = result;
         next();
       });
     });
   } catch(e) {
     console.error(e);
+    req.lastUploadedImage = result;
     next();
   }
   

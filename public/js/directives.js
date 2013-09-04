@@ -94,6 +94,9 @@ angular.module('myApp.directives', []).
      var list = [];
      element[0].appendChild(displayBox);
      element[0].appendChild(ul);
+     displayBox.addEventListener('click', function () {
+      $(element[0]).toggleClass('hover');
+     });
      options.forEach(function (val) {
       var e = document.createElement('li');
       e.innerHTML = val.value;
@@ -113,5 +116,12 @@ angular.module('myApp.directives', []).
   directive('loadingAnimation', [function () {
     return function (scope, element, attrs) {
 
+    };
+  }]).
+  directive('clickToggleClass', [function () {
+    return function (scope, element, attrs) {
+      element[0].addEventListener('click', function () {
+        $(element[0]).toggleClass(attrs.clickToggleClass);
+      });
     };
   }]);

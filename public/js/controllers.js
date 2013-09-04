@@ -424,6 +424,7 @@ angular.module('myApp.controllers', []).
           val.pictures.forEach(function (pic) {
             var newPic = Item.picture(pic),
                 img = new Image();
+            img.src = pic;
             if (img.complete) {
               newPic.loaded = true;
               try {
@@ -437,7 +438,6 @@ angular.module('myApp.controllers', []).
                 } catch(e) {}
               };
             }
-            img.src = pic;
             it.pictures.push(newPic);
           });
           $scope.items.push(it);
@@ -766,17 +766,29 @@ angular.module('myApp.controllers', []).
       $scope.uploading = true;
 
       // TODO: 验证
-      var pass = true;
+      var pass = true,
+          msg;
+
       $scope.items.forEach(function (val, i) {
         if (!val.tag) {
           // friendly alert
-          alert('You need to select a location tag for each site.');
+          msg = 'You need to select a location tag for each site.';
+          pass = false;
+        }
+        if (!val.title) {
+          msg = 'Item\'s title is required.';
           pass = false;
         }
       });
 
+      if (!$scope.title || !$scope.summary) {
+        pass = false;
+        msg = 'Cannot create a mark without title and summary.';
+      }
+
       // 没有通过验证则取消上传
       if (!pass) {
+        alert(msg);
         $scope.uploading = false;
         return;
       }
