@@ -202,7 +202,7 @@
             <div class="buttons">
               <div title="Edit" class="edit" ng-click="edit()" ng-show="editable">✎</div>
               <div title="Delete" class="remove" ng-click="remove()" ng-show="editable"><i class="icon-white icon-remove"></i></div>
-              <div title="Like" class="collect">❤</div>
+              <div title="Like" class="collect">❤<span ng-bind-template="{{likes|shortNumber}}"></span></div>
               <div title="Switch display mode" class="mode" ng-click="switchMode()"></div>
             </div>
           </div>
