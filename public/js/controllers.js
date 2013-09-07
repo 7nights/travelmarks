@@ -548,14 +548,16 @@ angular.module('myApp.controllers', []).
     // ---------- events ----------
     // 每次进入页面之后初始化
     ModManager.addListener('before', function (mod) {
+      if (mod !== 'detail') {
+        return;
+      }
+
+      /* 每次进入的时候重置两列模式 */
       var area_msry = area('UploadCtrl.msry');
       area_msry.mode2rows.set(false);
       if (area_msry.msry.get()) {
         area_msry.msry.get().masonry('destroy');
         area_msry.msry.set(null);
-      }
-      if (mod !== 'detail') {
-        return;
       }
 
       // 如果没有缓存则重置view
@@ -573,6 +575,7 @@ angular.module('myApp.controllers', []).
           document.body.scrollTop = 0;
         }, 300);
       } else {
+        $scope.$digest();
         return;
       }
 
@@ -591,6 +594,7 @@ angular.module('myApp.controllers', []).
 
       // 消化更改，让之前重置的view被渲染
       $scope.$digest();
+      console.log($scope.getMode());
     });
     // 清除cachedId
     $rootScope.$on('DetailCtrl.clearCache', function () {
