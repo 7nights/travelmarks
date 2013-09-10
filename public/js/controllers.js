@@ -565,7 +565,7 @@ angular.module('myApp.controllers', []).
         reload: true,
         config: function () {
           this.page.identifier = window.location.hash;
-          this.page.url = window.location.href;
+          this.page.url = 'http://' + window.location.host + '#!' + window.location.hash.substr(1);
         }
       });
       console.log('rest', window.location.hash, window.location.href);
