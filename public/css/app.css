@@ -904,6 +904,8 @@ background-image: url(../img/test.png);
 }
 #mod-explore .mod-nav .buttons{
   margin-right: 0;
+  z-index: 5;
+  position: relative;
 }
 #mod-explore .modes .href:hover{
   cursor: pointer;
@@ -1339,8 +1341,8 @@ textarea {
   background-color: #CE655E;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.15);
-  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.1),inset 0 -1px 0 rgba(0, 0, 0, 0.07);
+  background-color: rgba(0, 0, 0, 0.12);
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.05),inset 0 -1px 0 rgba(0, 0, 0, 0.03);
 }
 .custom-scrollbar::-webkit-scrollbar {
   width: 10px;
@@ -1354,6 +1356,12 @@ textarea {
   width: 0;
   height: 0;
   display: none;
+}
+.custom-scrollbar::-webkit-scrollbar-corner {
+  display: none;
+  width: 0;
+  height: 0;
+  background-color: rgba(0, 0, 0, .1);
 }
 
 .custom-select {
