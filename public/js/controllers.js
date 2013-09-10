@@ -560,6 +560,16 @@ angular.module('myApp.controllers', []).
         area_msry.msry.set(null);
       }
 
+      /* reset Disqus */
+      DISQUS.reset({
+        reload: true,
+        config: function () {
+          this.page.identifier = window.location.hash;
+          this.page.url = window.location.href;
+        }
+      });
+      console.log('rest', window.location.hash, window.location.href);
+
       // 如果没有缓存则重置view
       if (HashManager.getArgs().id !== cachedId) {
         $scope.title = '';
