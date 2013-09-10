@@ -860,6 +860,7 @@ background-image: url(../img/test.png);
   background-color: #E68983;
   padding: 11px;
   border-bottom: 1px solid #E68983;
+  border-radius: 4px;
 }
 #mod-home .buttons .btn{
   border-bottom: 3px solid #C97570;
@@ -981,9 +982,25 @@ background-image: url(../img/test.png);
   position: absolute;
   z-index: 30;
   display: none;
-  box-shadow: 4px 4px 0 #B65852;
 }
-.control-box-btns div {
+.control-box-btns .up-triangle {
+  position: relative;
+  background-color: transparent;
+  height: 8px;
+}
+.control-box-btns .up-triangle::before {
+  border: 6px solid transparent;
+  border-bottom-color: #E68983;
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 5px;
+}
+.control-box-btns .btns-wrap {
+  box-shadow: 4px 4px 0 #B65852;
+  border-radius: 4px;
+}
+.control-box-btns .btns-wrap div {
   background-color: #E68983;
   color: #FFF;
   padding: 12px 10px;
@@ -1022,7 +1039,13 @@ background-image: url(../img/test.png);
   position: relative;
   top: 9px;
 }
-.control-box-btns div:hover{
+.control-box-btns .btns-wrap div:first-child {
+  border-radius: 4px 4px 0 0;
+}
+.control-box-btns .btns-wrap div:last-child {
+  border-radius: 0 0 4px 4px;
+}
+.control-box-btns .btns-wrap div:hover{
   background-color: #F39892;
 }
 .big-num{
