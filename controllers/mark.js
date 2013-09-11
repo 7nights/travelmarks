@@ -5,6 +5,7 @@ var User = require('../models').User,
     Mark = require('../models').Mark,
     Item = require('../models').Item,
     Picture = require('../models').Picture,
+    Like = require('../models').Like,
     Tag = require('../models').Tag,
     check = require('validator').check,
     sanitize = require('validator').sanitize,
@@ -121,7 +122,7 @@ exports.getMark = function (req, res, next) {
   if (!req.param('id')) {
     return res.json({status: -1, message: '请输入完整呀!'});
   }
-  var ep = EventProxy.create(['markGot', 'itemsGot', 'usernameGot', function (mark, items, username) {
+  var ep = EventProxy.create(['markGot', 'itemsGot', 'usernameGot', 'likeGot', function (mark, items, username, likeInfo) {
     var count = 0;
     items.forEach(function (val) {
       count += val.pictures.length;
@@ -135,7 +136,9 @@ exports.getMark = function (req, res, next) {
       total: count,
       date: mark.date,
       items: items,
-      author_id: mark.author
+      author_id: mark.author,
+      like_count: likeInfo.count,
+      liked: likeInfo.liked
     };
 
     Mark.increaseRead(req.param('id'));
@@ -157,6 +160,11 @@ exports.getMark = function (req, res, next) {
   Item.getMarkItems(req.param('id'), function (err, m) {
     if (err) return next(err);
     ep.emit('itemsGot', m);
+  });
+  var userId;
+  if (req.session.user) userId = req.session.user._id;
+  Like.getInfo(req.param('id'), userId, function (count, liked) {
+    ep.emit('likeGot', {count: count, liked: liked});
   });
 };
 
@@ -462,5 +470,26 @@ exports.createTag = function (req, res, next) {
     Tag.createTag(markId, name, addr, lat, lng, function (err, tag) {
       return res.json({status: 1, message: '成功', data: {tagId: tag._id}});
     });
+  });
+};
+
+/**
+ * 对一个mark标记喜欢
+ * @param {ObjectId} req.params.markId
+ */
+exports.like = function (req, res, next) {
+  if (!req.param('markId')) return res.json({status: -1, message: '非法输入'});
+  Like.like(req.param('markId'), req.session.user._id, function () {
+    res.json({status: 1, message: '标记喜欢成功!'});
+  });
+};
+
+/**
+ * 取消对一个mark的喜欢
+ */
+exports.dislike = function (req, res, next) {
+  if (!req.param('markId')) return res.json({status: -1, message: '非法输入'});
+  Like.dislike(req.param('markId'), req.session.user._id, function () {
+    res.json({status: 1, message: '取消喜欢成功!'});
   });
 };

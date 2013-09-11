@@ -300,10 +300,11 @@ textarea{
   /* margin-left: 10px; */
 }
 #mod-detail .detail-comment {
-  border-left: 1px solid #D8D8D8;
-  border-right: 1PX SOLID #D8D8D8;
+  border: 1px solid #D8D8D8;
   padding: 10px;
   border-top: 1px solid #DDD;
+  border-bottom: 0;
+  background-color: #EEE;
 }
 
 #mod-detail .container .wrap-padding {
@@ -394,6 +395,14 @@ background-image: url(../img/test.png);
   width: 25px;
   text-align: center;
   position: relative;
+}
+#mod-detail .collect {
+  height: 23px;
+  padding: 1px 0;
+}
+#mod-detail .collect.liked {
+  border-top: 2px solid #CF5C5C;
+  padding: 0;
 }
 #mod-detail .collect span {
   position: absolute;

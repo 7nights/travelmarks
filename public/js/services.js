@@ -168,6 +168,33 @@ angular.module('HashManager', []).provider('HashManager', function(){
 /* Services */
 angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
   value('version', '0.1').
+  provider('DISQUS', function () {
+    var init = false;
+    this.$get = function () {
+      return {
+        reset: function () {
+          var self = this;
+          if (!init || !window.DISQUS) {
+            return setTimeout(function () {
+              self.reset();
+            }, 200);
+          }
+          DISQUS.reset({
+            reload: true,
+            config: function () {
+              this.page.identifier = window.location.hash;
+              this.page.url = 'http://' + window.location.host + '#!' + window.location.hash.substr(1);
+            }
+          });
+        },
+        init: function (e) {
+          init = true;
+          e.innerHTML = '<div id="disqus_thread"></div><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript><a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>';
+          eval('var disqus_shortname = "travelmarks";var disqus_identifier = "newidentifier";var disqus_url = "http://www.example.com";(function() {var dsq = document.createElement("script"); dsq.type = "text/javascript"; dsq.async = true;dsq.src = "//" + disqus_shortname + ".disqus.com/embed.js";(document.getElementsByTagName("head")[0] || document.getElementsByTagName("body")[0]).appendChild(dsq);})();');
+        }
+      };
+    };
+  }).
   provider('area', function () {
     var oAreas = {};
     /*

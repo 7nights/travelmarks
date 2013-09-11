@@ -350,7 +350,7 @@ angular.module('myApp.controllers', []).
     });
 
   }]).
-  controller('DetailCtrl', ['$scope', '$http', 'HashManager', 'ModManager', 'User', '$rootScope', 'area', 'Util', function ($scope, $http, HashManager, ModManager, User, $rootScope, area, Util) {
+  controller('DetailCtrl', ['$scope', '$http', 'HashManager', 'ModManager', 'User', '$rootScope', 'area', 'Util', 'DISQUS', function ($scope, $http, HashManager, ModManager, User, $rootScope, area, Util, DISQUS) {
     // ---------- initialize ----------
     // 最后一次从服务器获得的数据
     var lastData;
@@ -360,11 +360,16 @@ angular.module('myApp.controllers', []).
     // 初始化view参数
     $scope.title = '';
     $scope.location = '';
-    $scope.read = 32;
+    $scope.read = 0;
     $scope.author = '';
     $scope.summary = '';
     $scope.total = 0;
     $scope.date = '';
+
+    // init DISQUS
+    window.addEventListener('load', function () {
+      DISQUS.init(document.querySelector('.detail-comment'));
+    }, false);
 
     // ---------- functions ----------
     // item的方便构造途径
@@ -403,6 +408,8 @@ angular.module('myApp.controllers', []).
         $scope.summary = data.summary;
         $scope.total = data.total;
         $scope.date = data.date;
+        $scope.like_count = data.like_count;
+        $scope.liked = data.liked;
 
         if ($scope.author === User.name) {
           $scope.editable = true;
@@ -545,6 +552,43 @@ angular.module('myApp.controllers', []).
       return $scope.items[i].pictures[j].loaded?'loaded':'';
     };
 
+    // [view函数] 判断当前用户是否已经给当前mark标记了喜欢
+    $scope.ifLiked = function () {
+      var rslt = 'collect ';
+      return $scope.liked ? rslt + 'liked' : rslt;
+    };
+
+    // [view函数] 对当前mark标记喜欢或移除喜欢
+    $scope.likeMark = function () {
+      if (!User.id) {
+        window.location = '';
+      }
+      var url = 'mark/like';
+      var liked = $scope.liked;
+      var id = HashManager.getArgs().id;
+      if($scope.liked) {
+        url = 'mark/dislike';
+      }
+      $http({
+        method: 'GET',
+        url: url,
+        params: {
+          markId: id,
+          _csrf: User._csrf
+        }
+      }).
+      success(function (data) {
+        if (data.status === 1 && HashManager.getArgs().id === id) {
+          $scope.liked = !liked;
+          if (liked) {
+            $scope.like_count --;
+          } else {
+            $scope.like_count ++;
+          }
+        }
+      });
+    };
+
     // ---------- events ----------
     // 每次进入页面之后初始化
     ModManager.addListener('before', function (mod) {
@@ -561,14 +605,7 @@ angular.module('myApp.controllers', []).
       }
 
       /* reset Disqus */
-      DISQUS.reset({
-        reload: true,
-        config: function () {
-          this.page.identifier = window.location.hash;
-          this.page.url = 'http://' + window.location.host + '#!' + window.location.hash.substr(1);
-        }
-      });
-      console.log('rest', window.location.hash, window.location.href);
+      DISQUS.reset();
 
       // 如果没有缓存则重置view
       if (HashManager.getArgs().id !== cachedId) {
@@ -580,6 +617,8 @@ angular.module('myApp.controllers', []).
         $scope.total = 0;
         $scope.date = '';
         $scope.items = [];
+        $scope.liked = 0;
+        $scope.like_count = 0;
         cachedId = HashManager.getArgs().id;
         setTimeout(function () {
           document.body.scrollTop = 0;
