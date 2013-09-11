@@ -366,10 +366,7 @@ angular.module('myApp.controllers', []).
     $scope.total = 0;
     $scope.date = '';
 
-    // init DISQUS
-    window.addEventListener('load', function () {
-      DISQUS.init(document.querySelector('.detail-comment'));
-    }, false);
+    $('.detail-comment').remove();
 
     // ---------- functions ----------
     // item的方便构造途径
@@ -603,9 +600,6 @@ angular.module('myApp.controllers', []).
         area_msry.msry.get().masonry('destroy');
         area_msry.msry.set(null);
       }
-
-      /* reset Disqus */
-      DISQUS.reset();
 
       // 如果没有缓存则重置view
       if (HashManager.getArgs().id !== cachedId) {
