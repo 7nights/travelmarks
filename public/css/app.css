@@ -37,9 +37,9 @@
   opacity: .3;
 }
 .nav{
-  background: url(../img/bg-worldmap-lighter.png);
+  background: url(../img/world-maps-lighter.png);
   line-height: 40px;
-  background-position: 0 50%;
+  background-position: 0 56%;
   border-bottom: 1px solid #DDD;
   padding-left: 10px;
   height: 40px;
@@ -232,6 +232,7 @@ textarea{
   margin-bottom: 5px;
   padding: 5px;
   background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
 }
 .login-box a{
   color: #E0E0E0;
@@ -254,7 +255,7 @@ textarea{
   font-size: 14px;
   border-radius: 0;
   text-indent: 0;
-  width: 775px;
+  width: 769px;
 }
 #mod-upload strong{
   vertical-align: top;
@@ -277,7 +278,7 @@ textarea{
   position: relative;
 }
 #mod-upload .form-container{
-  border: 1px solid #DDD;
+  border: 2px solid #DDD;
   border-radius: 5px;
   overflow: hidden;
   box-shadow: 0 0px 1px #FFF;
@@ -297,6 +298,13 @@ textarea{
 }
 #mod-detail .top-wrapper{
   /* margin-left: 10px; */
+}
+#mod-detail .detail-comment {
+  border: 1px solid #D8D8D8;
+  padding: 10px;
+  border-top: 1px solid #DDD;
+  border-bottom: 0;
+  background-color: #EEE;
 }
 
 #mod-detail .container .wrap-padding {
@@ -386,6 +394,24 @@ background-image: url(../img/test.png);
   height: 25px;
   width: 25px;
   text-align: center;
+  position: relative;
+}
+#mod-detail .collect {
+  height: 23px;
+  padding: 1px 0;
+}
+#mod-detail .collect.liked {
+  border-top: 2px solid #CF5C5C;
+  padding: 0;
+}
+#mod-detail .collect span {
+  position: absolute;
+  background-color: #CE8B8B;
+  line-height: 1em;
+  font-size: 12px;
+  bottom: -9px;
+  right: -3px;
+  border: 1px solid #ECECEC;
 }
 #mod-detail .remove i{
   position: relative;
@@ -789,7 +815,7 @@ background-image: url(../img/test.png);
     margin: 20px 0;
 }
 #mod-upload .item-box{
-  border: 1px solid #DDD;
+  border: 2px solid #DDD;
   border-radius: 5px;
   overflow: hidden;
   box-shadow: 0 0px 1px #FFF;
@@ -849,11 +875,13 @@ background-image: url(../img/test.png);
   background-color: #E68983;
   padding: 11px;
   border-bottom: 1px solid #E68983;
+  border-radius: 4px;
 }
 #mod-home .buttons .btn{
   border-bottom: 3px solid #C97570;
   background-color: #E68983;
   line-height: 41px;
+  border-radius: 3px;
 }
 #mod-home .buttons .btn:hover{
   border-bottom: 3px solid #F3A8A8;
@@ -971,9 +999,25 @@ background-image: url(../img/test.png);
   position: absolute;
   z-index: 30;
   display: none;
-  box-shadow: 4px 4px 0 #B65852;
 }
-.control-box-btns div {
+.control-box-btns .up-triangle {
+  position: relative;
+  background-color: transparent;
+  height: 8px;
+}
+.control-box-btns .up-triangle::before {
+  border: 6px solid transparent;
+  border-bottom-color: #E68983;
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 5px;
+}
+.control-box-btns .btns-wrap {
+  box-shadow: 4px 4px 0 #B65852;
+  border-radius: 4px;
+}
+.control-box-btns .btns-wrap div {
   background-color: #E68983;
   color: #FFF;
   padding: 12px 10px;
@@ -1012,7 +1056,13 @@ background-image: url(../img/test.png);
   position: relative;
   top: 9px;
 }
-.control-box-btns div:hover{
+.control-box-btns .btns-wrap div:first-child {
+  border-radius: 4px 4px 0 0;
+}
+.control-box-btns .btns-wrap div:last-child {
+  border-radius: 0 0 4px 4px;
+}
+.control-box-btns .btns-wrap div:hover{
   background-color: #F39892;
 }
 .big-num{
@@ -1334,7 +1384,7 @@ textarea {
   width: 80px;
   background-color: #80C072;
   color: #FFF;
-  border-bottom: 3px solid #70B362;
+  border-top: 2px solid #70B362;
   position: relative;
   padding: 2px 4px;
   border-radius: 2px;
@@ -1350,7 +1400,7 @@ textarea {
   position: absolute;
   z-index: 1000;
   background-color: #80C072;
-  margin-top: 5px;
+  margin-top: 2px;
   margin-left: -4px;
   display: none;
   width: 100%;

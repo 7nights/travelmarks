@@ -71,10 +71,13 @@
           <div class="control-box">
             <div class="control-btn"></div>
             <div class="control-box-btns">
-              <div ng-click="modeSwitch('large')">Large</div>
-              <div ng-click="modeSwitch('middle')">Middle</div>
-              <div ng-click="modeSwitch('small')">Small</div>
-              <div ng-click="modeSwitch('list')">List</div>
+              <div class="up-triangle"></div>
+              <div class="btns-wrap">
+                <div ng-click="modeSwitch('large')">Large</div>
+                <div ng-click="modeSwitch('middle')">Middle</div>
+                <div ng-click="modeSwitch('small')">Small</div>
+                <div ng-click="modeSwitch('list')">List</div>
+              </div>
             </div>
           </div>
           <a href="#upload"><button class="btn">Create a New Mark</button></a>
@@ -202,7 +205,7 @@
             <div class="buttons">
               <div title="Edit" class="edit" ng-click="edit()" ng-show="editable">✎</div>
               <div title="Delete" class="remove" ng-click="remove()" ng-show="editable"><i class="icon-white icon-remove"></i></div>
-              <div title="Like" class="collect">❤</div>
+              <div title="Like" ng-class="ifLiked()" ng-click="likeMark()" class="collect">❤<span ng-bind-template="{{like_count|shortNumber}}"></span></div>
               <div title="Switch display mode" class="mode" ng-click="switchMode()"></div>
             </div>
           </div>
@@ -225,6 +228,10 @@
           </li>
         </ul>
       </div>
+
+      <section class="detail-comment">
+      </section>
+          
     </div>
   </section><!-- /$mod-detail -->
 

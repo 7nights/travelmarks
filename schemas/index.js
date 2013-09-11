@@ -13,9 +13,11 @@ require('./mark');
 require('./item');
 require('./picture');
 require('./tag');
+require('./like');
 
 exports.User = mongoose.model('User');
 exports.Mark = mongoose.model('Mark');
 exports.Item = mongoose.model('Item');
 exports.Picture = mongoose.model('Picture');
 exports.Tag = mongoose.model('Tag');
+exports.Like = mongoose.model('Like');

@@ -19,6 +19,8 @@ module.exports = function (app) {
   app.get('/mark/explore', mark.exploreMarks);
   app.post('/mark/delete', auth, utils.csrf, auth_csrf, mark.deleteMark);
   app.post('/mark/alter', auth, mark.alterMark);
+  app.get('/mark/like', auth_csrf, mark.like);
+  app.get('/mark/dislike', auth_csrf, mark.dislike);
 
   // item
   app.post('/item/create', auth, mark.createItem);
