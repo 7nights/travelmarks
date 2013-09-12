@@ -4,7 +4,7 @@
 
 angular.module('myApp.controllers', []).
   controller('SignInCtrl', ['$scope', '$http', 'ModManager', 'Util', 'User', function ($scope, $http, ModManager, Util, User) {
-    
+    setTimeout(function () {Util.alert('test title', 'testlalala', 'confirm');}, 1000);
     // ---------- initialize ----------
     // 注册链接的文本，在注册模式下变为’已经有一个账号‘
     $scope.loginBoxDesc = 'Sign up right now!';
@@ -301,6 +301,7 @@ angular.module('myApp.controllers', []).
     
     // 对日期的格式化处理，用于显示到view
     $scope.filterDate = function (date) {
+      if (isNaN(new Date(date).getTime())) return '';
       return new Date(date).toLocaleString();
     };
     
@@ -449,6 +450,10 @@ angular.module('myApp.controllers', []).
         });
         lastData.items = $scope.items;
 
+      } else {
+        Util.notice('Mark not found.', 3000);
+        cachedId = null;
+        window.location.hash = 'explore';
       }
     };
 
@@ -485,6 +490,7 @@ angular.module('myApp.controllers', []).
     // [view函数] 格式化date以显示
     $scope.dateFilter = function (d, format) {
       var d = new Date(d);
+      if (isNaN(d.getTime())) return '';
       switch(format) {
         case 0:
           return d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate();

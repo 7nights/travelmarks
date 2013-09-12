@@ -313,6 +313,7 @@ angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
           startTimer(scope);
           scope.msg = msg;
           //clonedElement[0].style.display = "block";
+          clonedElement[0].style.left = (innerWidth - clonedElement[0].offsetWidth) / 2 + 'px';
           scope.visible = true;
           scope.$digest();
           clonedElement[0].style.left = (window.innerWidth - clonedElement[0].offsetWidth) / 2 + "px";
@@ -422,6 +423,9 @@ angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
 
     /**
      * 遮罩
+     * enable: 是否开启遮罩
+     * what: 遮罩的标志，通过标志可以管理遮罩
+     * clear: 哪些元素不在遮罩之下, 数组
      * plexi(enable, [what='PLEXI'], [zIndex=1000], [clear])
      * plexi.push([zIndex], [clear])
      * plexi.remove()
@@ -557,6 +561,99 @@ angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
       }
     };
 
+    /**
+     * 自定义的alert窗口
+     */
+    var _alert = function () {
+      var scope, compile;
+      var alertType = 'panel'; // 'alert' || 'comfirm'
+      var pendingAlert = [];
+      var currentAlert;
+      angular.injector(['ng', 'ngSanitize']).invoke(['$rootScope', '$compile', '$sanitize', function ($rootScope, $compile, $sanitize) {
+        scope = $rootScope;
+        compile = $compile;
+        scope.show = false;
+        scope.getComponent = function (type) {
+          switch(type) {
+            case 'buttons':
+              if (alertType === 'alert' || alertType === 'confirm') return true;
+              if (alertType === 'panel') return false;
+              break;
+            case 'cancelable':
+              if (alertType === 'confirm') return true;
+              return false;
+            case 'title':
+              if (!scope.title) return false;
+              return true;
+          }
+        };
+        scope.cancel = function () {
+          typeof currentAlert.oncancel === 'function' && currentAlert.oncancel();
+          closeAlert();
+        };
+        scope.ok = function () {
+          typeof currentAlert.onok === 'function' && currentAlert.onok();
+          closeAlert();
+        };
+      }]);
+      var ele = angular.element('<div class="custom-alert"><div ng-show="getComponent(\'title\')" class="custom-alert-title" ng-bind-template="{{title}}"></div><div ng-bind-html="alertMessage" class="custom-alert-messageBody"></div><div class="custom-alert-buttons" ng-show="getComponent(\'buttons\')"><button ng-click="cancel()" ng-show="getComponent(\'cancelable\')" class="custom-btn-cancel btn-success btn">Cancel</button><button class="custom-btn-ok btn-info btn" ng-click="ok()">OK</button></div></div>'),
+      filter = angular.element('<div ng-show="show" class="custom-alert-filter" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;"></div>');
+      filter = compile(filter)(scope, function(ele) {
+        document.body.appendChild(ele[0]);
+      });
+      var clonedElement = compile(ele)(scope, function (clonedElement, scope) {
+        document.body.appendChild(clonedElement[0]);
+      });
+
+
+      function closeAlert() {
+        var height = clonedElement[0].offsetHeight;
+        clonedElement[0].style.top = - height - 10 + 'px';
+        scope.show = false;
+        typeof currentAlert.onclose === 'function' && currentAlert.onclose();
+        try {
+          scope.$digest();
+        } catch (e) {}
+      }
+
+      function AlertCtrl() {
+        this._id = parseInt(Math.random() * 100000);
+        this.showed = false;
+      }
+      AlertCtrl.prototype.close = closeAlert;
+
+      function showAlert(title, msg, type) {
+        scope.title = title;
+        if (!type) type = 'alert';
+        alertType = type;
+        var obj = pendingAlert.shift();
+        obj.showed = true;
+        currentAlert = obj;
+        scope.show = true;
+        scope.alertMessage = msg;
+        scope.$digest();
+        clonedElement[0].style.top = - clonedElement[0].offsetHeight - 10 + 'px';
+        clonedElement[0].style.display = 'block';
+        setTimeout(function () {
+          clonedElement[0].style.top = '0';
+        });
+      }
+
+      /*
+       * 显示alert窗口
+       * 调用此函数返回一个对象,设置这个对象的onclose, oncancel, onok属性可监听事件
+       * 此对象还有一个close对象可调用, 用来关闭alert窗口
+       */
+      return function (title, msg, type) {
+        var obj = new AlertCtrl();
+        pendingAlert.push(obj);
+
+        if (!scope.show) showAlert(title, msg, type);
+
+        return obj;
+      };
+    }();
+
     var settings = function () {
       var NAMESPACE = 'jxoq532nm#$d';
       var listeners = [];
@@ -628,7 +725,8 @@ angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
       getDatePicker: getDatePicker,
       plexi: plexi,
       settings: settings,
-      getCompressedImage: getCompressedImage
+      getCompressedImage: getCompressedImage,
+      alert: _alert
     };
     this.$get = function(){
       return exports;
