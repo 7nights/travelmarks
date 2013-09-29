@@ -168,6 +168,71 @@ angular.module('HashManager', []).provider('HashManager', function(){
 /* Services */
 angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
   value('version', '0.1').
+  provider('lazyLoad', function () {
+    var mod = {};
+    var windowLoaded = false;
+    var _methods = {
+      define: function (mods) {
+        mods.forEach(function (val) {
+          mod[val.name] = {
+            url: val.url,
+            loaded: false,
+            loading: false,
+            type: val.type || 'js'
+          };
+        });
+      },
+      exec: function (requires, callback) {
+        // 检查模块是否已经被载入过
+        requires.forEach(function (val) {
+          if (!mod[val].loading && !mod[val].loaded) {
+            mod[val].loading = true;
+            loadMod(val);
+          }
+        });
+        // 等待所有模块载入完毕后执行
+        var t = setInterval(function () {
+          var loaded = true;
+          for (var i = requires.length; i--; ) {
+            if (!mod[requires[i]].loaded) {
+              loaded = false;
+              break;
+            }
+          }
+          if (loaded) {
+            callback();
+            clearInterval(t);
+          }
+        }, 100);
+      }
+    };
+    function loadMod(modName) {
+      if (!windowLoaded) {
+        setTimeout(function () {
+          loadMod(modName);
+        }, 100);
+        return;
+      }
+      mod[modName].loading = true;
+      var dom;
+      switch(mod[modName].type) {
+        case 'js':
+          dom = document.createElement('script');
+          dom.onload = function () {
+            mod[modName].loaded = true;
+          }
+          dom.src = mod[modName].url;
+          break;
+      }
+      document.querySelector('head').appendChild(dom);
+    }
+    window.addEventListener('load', function () {
+      windowLoaded = true;
+    });
+    this.$get = function () {
+      return _methods;
+    };
+  }).
   provider('DISQUS', function () {
     var init = false;
     this.$get = function () {

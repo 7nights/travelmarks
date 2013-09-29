@@ -4,7 +4,7 @@
 
 angular.module('myApp.controllers', []).
   controller('SignInCtrl', ['$scope', '$http', 'ModManager', 'Util', 'User', function ($scope, $http, ModManager, Util, User) {
-    setTimeout(function () {Util.alert('test title', 'testlalala', 'confirm');}, 1000);
+
     // ---------- initialize ----------
     // 注册链接的文本，在注册模式下变为’已经有一个账号‘
     $scope.loginBoxDesc = 'Sign up right now!';
@@ -651,7 +651,7 @@ angular.module('myApp.controllers', []).
     });
     
   }]).
-  controller('UploadCtrl', ['$scope', '$http', 'ModManager', 'Item', '$q', 'Util', 'HashManager', 'area', function ($scope, $http, ModManager, Item, $q, Util, HashManager, area) {
+  controller('UploadCtrl', ['$scope', '$http', 'ModManager', 'Item', '$q', 'Util', 'HashManager', 'area', 'lazyLoad', function ($scope, $http, ModManager, Item, $q, Util, HashManager, area, lazyLoad) {
     // ---------- initialize ----------
     // 最后一次被点击的tag
     var lastClickedTag;
@@ -665,7 +665,19 @@ angular.module('myApp.controllers', []).
     $scope.uploading = false;
 
     // 用于发送地理位置请求的实例
-    var req = new google.maps.places.PlacesService(document.createElement('div')),
+    lazyLoad.define([{
+      name: 'googleMapApi',
+      url: 'http://maps.google.com/maps/api/js?v=3.8&sensor=false&key=&libraries=places&language=zh_cn&hl=&region=&callback=google_maps_cb'
+    }]);
+
+    window.google_maps_cb = function () {
+      req = new google.maps.places.PlacesService(document.createElement('div'));
+      window.google_maps_req = req;
+    };
+
+    lazyLoad.exec(['googleMapApi'], function () {
+    });
+    var req,
         cachedData,
         cachedItems;
 
@@ -1780,7 +1792,7 @@ angular.module('myApp.controllers', []).
           }
         });
         var junk = document.createElement('div');
-        var req = new google.maps.places.PlacesService(junk);
+        var req = window.google_maps_req;
         var throttle_t,
             throttle_count,
             THROTTLE_CD = 300;

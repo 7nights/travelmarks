@@ -97,6 +97,7 @@ exports.signIn = function (req, res, next) {
 // sign out
 exports.signOut = function (req, res, next) {
   if (req.query._csrf !== req.session._csrf) {
+    console.log(req.query._csrf, req.session._csrf);
     return res.redirect("/");
   }
   req.session.destroy();

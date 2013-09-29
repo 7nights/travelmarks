@@ -557,13 +557,13 @@ h6 {
 .btn.btn-info {
   background-color: #48BBE7;
   border-radius: 2px;
-  border-bottom: 3px solid #4A89CE;
+  border-bottom: 2px solid #4A89CE;
 }
 .btn.btn-info:hover,
 .btn.btn-info:focus,
 .btn-group:focus .btn.btn-info.dropdown-toggle {
-  /* background-color: #70D2F1; */
-  border-bottom: 3px solid #70D2F1;
+  border-bottom-color: #70D2F1;
+  /* border-bottom: 3px solid #70D2F1; */
 }
 .btn.btn-info:active,
 .btn-group.open .btn.btn-info.dropdown-toggle,
@@ -585,7 +585,7 @@ h6 {
 }
 .btn.btn-success {
   background-color: #E76E66;
-  border-bottom: 3px solid #BE524B;
+  border-bottom: 2px solid #BE524B;
   border-radius: 2px;
 }
 .btn.btn-success:hover,

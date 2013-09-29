@@ -733,6 +733,15 @@ background-image: url(../img/test.png);
   color: #424242;
   overflow: hidden;
 }
+.marks-container .mark a {
+  text-decoration: none;
+}
+.marks-container .mark a:hover {
+  text-decoration: none;
+}
+.marks-container .mark a:visited {
+  text-decoration: none;
+}
 .mark-cover-1, .mark-cover-2{
   height: 400px;
   position: absolute;
@@ -1463,4 +1472,7 @@ textarea {
   color: #FFF;
   background-color: #F5C9B1;
   border: 2px solid #EEBCA1;
+}
+.pre-line {
+  white-space: pre-line;
 }
