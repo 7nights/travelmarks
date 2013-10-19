@@ -14,12 +14,13 @@
   <script type="text/javascript" src="lib/md5.js"></script>!-->
   <script type="text/javascript" src="lib.min.js"></script>
   <script type="text/javascript" src="lib/masonry.min.js"></script>
-  <script src="http://maps.google.com/maps/api/js?v=3.8&amp;sensor=false&amp;key=&amp;libraries=places&amp;language=zh_cn&amp;hl=&amp;region=" type="text/javascript"></script>
+
 </head>
 <body class="custom-scrollbar custom-scrollbar-large">
+  <div class="global-loading"></div>
   <div class="nav" ng-controller="NavCtrl" ng-hide="hideNav">
     <!-- <div class="logo left"><img src="img/text-logo.png" />Travel Marks</div> -->
-    <div class="logo logo-v2 left" ><img src="img/logo-white.png"></div>
+    <div class="logo logo-v2 left" ><img src="img/icons/footprint-white-without-bg.png"></div>
     <div class="nav-a left">
       <a href="#explore" id="nav-btn-explore"><i class="icon-globe"></i> Explore</a>
       <a href="#home/refresh" id="nav-btn-home" class="active"><i class="icon-map-marker icon-white"></i>Marks</a>
@@ -39,7 +40,7 @@
     <div class="container">
       <div class="">
         <div>
-          <div class="brand"><img src="img/logo-small-rotate.png" />TravelMarks</div>
+          <div class="brand"><img src="img/icons/logo-white-without-shadow.png" />TravelMarks</div>
         </div>
         <div class="description">
           Mark every corner you have ever been.<br />
@@ -82,7 +83,7 @@
           </div>
           <a href="#upload"><button class="btn">Create a New Mark</button></a>
         </div>
-        <div class="desc left"><span class="big-num" ng-bind-template="{{totalMarks}}">0</span> <span ng-pluralize count="totalMarks" when="{'0': 'oops, no mark available', '1': 'mark', 'other': 'marks'}">marks</span> and <span class="big-num" ng-bind-template="{{totalPictures}}">0</span> <span ng-pluralize count="totalPictures" when="{'0': ': ( you have not uploaded pictures yet.', '1': 'picture', 'other': 'pictures'}">pictures.</span></div>
+        <div class="desc left"><span class="big-num" ng-bind-template="{{totalMarks}}">0</span> <span ng-pluralize count="totalMarks" when="{'0': 'mark ', '1': 'mark', 'other': 'marks'}">marks</span> and <span class="big-num" ng-bind-template="{{totalPictures}}">0</span> <span ng-pluralize count="totalPictures" when="{'0': 'picture. : ( you have not uploaded pictures yet.', '1': 'picture', 'other': 'pictures'}">pictures.</span></div>
         <div class="clear"></div>
       </div>
     </div>
@@ -93,7 +94,8 @@
         </div>
         
         <div class="marks-container">
-          <div class="mark" ng-repeat="mark in marks" ng-click="goTo(mark._id)">
+          <div class="mark" ng-repeat="mark in marks" >
+          <a href="#detail/{{mark._id}}">
             <div class="mark-cover-1"><div class="cover" ng-style="{'background-image': 'url(' + mark.cover + ')'}"></div></div>
             <div class="mark-cover-2"><div class="cover" ng-style="{'background-image': 'url(' + mark.cover + ')'}"></div></div>
             <div class="desc">
@@ -107,6 +109,7 @@
               <br />
               
             </div>
+          </a>
           </div>
         </div><!-- /.marks-container -->
       </div>
@@ -117,8 +120,12 @@
     <input type="file" class="upload-input" ng-change="fileChange()" ng-model="inputFile" />
     <div class="wrap-padding">
       <div class="container position-holder">
-        <h3 ng-bind-template='{{getModTitle()}}'></h3>
-        <div class="loading-animation" ng-show='uploading'>
+        <h3>
+          <span ng-bind-template='{{getModTitle()}}'></span>
+          <div class="switcher" switcher="finish_status_switcher" role="button">
+          </div>
+        </h3>
+        <div class="loading-animation" ng-show='false'>
           <span>.</span><span>.</span><span>.</span>
         </div>
 
@@ -179,7 +186,7 @@
             <div class='it-post-box'><textarea auto-height-textarea ng-model='it.post' class='it-post custom-scrollbar' placeholder='This is...' ></textarea></div>
           </li>
         </ul>
-        <button class='btn btn-info' ng-click='addMore()'>Upload More</button>
+        <button class='btn btn-info' ng-click='addMore()'>Add a Site</button>
         <button class='btn btn-success' ng-click='save()'>Save</button>
       </div>
     </div>
@@ -210,7 +217,7 @@
             </div>
           </div>
           <div class="clear"></div>
-          <div class="summary" ng-bind-template="{{summary}}"></div>
+          <div class="summary pre-line" ng-bind-template="{{summary}}"></div>
         </div>
         <br />
         <ul class="item-box" ng-class="getMode()">
@@ -224,7 +231,7 @@
             <div ng-repeat="pic in it.pictures" ng-class="ifLoad($parent.$index, $index)" class="it-pic-container">
               <img ng-src="{{pic.src}}" />
             </div>
-            <div class="it-post" ng-bind-template="{{it.post}}" ></div>
+            <div class="it-post pre-line" ng-bind-template="{{it.post}}" ></div>
           </li>
         </ul>
       </div>

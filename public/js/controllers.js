@@ -4,7 +4,7 @@
 
 angular.module('myApp.controllers', []).
   controller('SignInCtrl', ['$scope', '$http', 'ModManager', 'Util', 'User', function ($scope, $http, ModManager, Util, User) {
-    
+
     // ---------- initialize ----------
     // 注册链接的文本，在注册模式下变为’已经有一个账号‘
     $scope.loginBoxDesc = 'Sign up right now!';
@@ -301,6 +301,7 @@ angular.module('myApp.controllers', []).
     
     // 对日期的格式化处理，用于显示到view
     $scope.filterDate = function (date) {
+      if (isNaN(new Date(date).getTime())) return '';
       return new Date(date).toLocaleString();
     };
     
@@ -407,6 +408,7 @@ angular.module('myApp.controllers', []).
         $scope.date = data.date;
         $scope.like_count = data.like_count;
         $scope.liked = data.liked;
+        $scope.published = data.published;
 
         if ($scope.author === User.name) {
           $scope.editable = true;
@@ -449,6 +451,10 @@ angular.module('myApp.controllers', []).
         });
         lastData.items = $scope.items;
 
+      } else {
+        Util.notice('Mark not found.', 3000);
+        cachedId = null;
+        window.location.hash = 'explore';
       }
     };
 
@@ -485,6 +491,7 @@ angular.module('myApp.controllers', []).
     // [view函数] 格式化date以显示
     $scope.dateFilter = function (d, format) {
       var d = new Date(d);
+      if (isNaN(d.getTime())) return '';
       switch(format) {
         case 0:
           return d.getFullYear() + '.' + (d.getMonth() + 1) + '.' + d.getDate();
@@ -645,8 +652,15 @@ angular.module('myApp.controllers', []).
     });
     
   }]).
-  controller('UploadCtrl', ['$scope', '$http', 'ModManager', 'Item', '$q', 'Util', 'HashManager', 'area', function ($scope, $http, ModManager, Item, $q, Util, HashManager, area) {
+  controller('UploadCtrl', ['$scope', '$http', 'ModManager', 'Item', '$q', 'Util', 'HashManager', 'area', 'lazyLoad', 'Loading', function ($scope, $http, ModManager, Item, $q, Util, HashManager, area, lazyLoad, Loading) {
     // ---------- initialize ----------
+    // switcher
+    $scope.finish_status_switcher = {
+      off: 'Unfinished',
+      on: 'Finished',
+      status: 'off'
+    };
+
     // 最后一次被点击的tag
     var lastClickedTag;
     
@@ -659,7 +673,19 @@ angular.module('myApp.controllers', []).
     $scope.uploading = false;
 
     // 用于发送地理位置请求的实例
-    var req = new google.maps.places.PlacesService(document.createElement('div')),
+    lazyLoad.define([{
+      name: 'googleMapApi',
+      url: 'http://maps.google.com/maps/api/js?v=3.8&sensor=false&key=&libraries=places&language=zh_cn&hl=&region=&callback=google_maps_cb'
+    }]);
+
+    window.google_maps_cb = function () {
+      req = new google.maps.places.PlacesService(document.createElement('div'));
+      window.google_maps_req = req;
+    };
+
+    lazyLoad.exec(['googleMapApi'], function () {
+    });
+    var req,
         cachedData,
         cachedItems;
 
@@ -861,7 +887,8 @@ angular.module('myApp.controllers', []).
 
         // 判断mark是否有更改, 如果有提交到队列
         if ($scope.title !== cachedData.title ||
-          $scope.summary !== cachedData.summary) {
+          $scope.summary !== cachedData.summary ||
+          $scope.finish_status_switcher.status !== (cachedData.published?'on':'off')) {
           funcs.push(function () {
             totalUpdateCount++;
             $http({
@@ -870,9 +897,16 @@ angular.module('myApp.controllers', []).
               data: {
                 _id: $scope.id,
                 title: $scope.title,
-                summary: $scope.summary
+                summary: $scope.summary,
+                published: !cachedData.published
               }
-            }).success(function () {
+            }).success(function (data) {
+              console.log(data);
+              if (data.status === -1) {
+                $scope.uploading = false;
+
+                return Util.alert('Failed', '上传失败: ' + data.message);
+              }
               finishTotalUpdate('mark change');
             });
           });
@@ -1153,6 +1187,7 @@ angular.module('myApp.controllers', []).
           if (totalUpdateCount <= 0 && $scope.uploading && promises <= 0 && location.hash === '#upload/edit') {
             history.back();
             $scope.uploading = false;
+            $scope.$digest();
           }
         }, 300);
 
@@ -1182,7 +1217,8 @@ angular.module('myApp.controllers', []).
           url: 'mark/create',
           data: JSON.stringify({
             title: $scope.title,
-            summary: $scope.summary
+            summary: $scope.summary,
+            published: $scope.finish_status_switcher.status === 'on' ? true : false
           })
         }).
         success(function (data, status, headers, config) {
@@ -1350,6 +1386,13 @@ angular.module('myApp.controllers', []).
     };
 
     // ---------- events ----------
+    $scope.$watch('uploading', function (newVal, oldVal) {
+      if (newVal === true) {
+        Loading.start();
+      } else {
+        Loading.end();
+      }
+    });
     ModManager.addListener('before', function (mod) {
       if (mod !== 'upload' ) {
         return;
@@ -1388,6 +1431,7 @@ angular.module('myApp.controllers', []).
         $scope.summary = m.summary;
         $scope.locTags = [];
         $scope.id = m.id;
+        $scope.finish_status_switcher.status = m.published?'on':'off';
         var added = [];
         m.items.forEach(function (val) {
           var tag = val.tag;
@@ -1774,7 +1818,7 @@ angular.module('myApp.controllers', []).
           }
         });
         var junk = document.createElement('div');
-        var req = new google.maps.places.PlacesService(junk);
+        var req = window.google_maps_req;
         var throttle_t,
             throttle_count,
             THROTTLE_CD = 300;
@@ -1792,6 +1836,10 @@ angular.module('myApp.controllers', []).
           
           function sendRequest() {
             if (!lsScope.inputPos) return;
+            if (!req) {
+              req = window.google_maps_req;
+              return setTimeout(sendRequest, 100);
+            }
             req.textSearch({
               query: lsScope.inputPos
             }, function (arr) {
