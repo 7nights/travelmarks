@@ -310,6 +310,7 @@ textarea{
 #mod-detail .total-pictures{
   font-size: 18px;
   float: right;
+  margin-right: 5px;
 }
 #mod-detail .top-wrapper{
   /* margin-left: 10px; */
@@ -326,6 +327,7 @@ textarea{
 border: 0px solid #D5D5D5;
 border-left-width: 1px;
 border-right-width: 1px;
+background-color: rgba(245, 239, 239, 0.55);
 background-image: url(../img/test.png);
 }
 #mod-detail .total-pictures > span{
@@ -335,8 +337,15 @@ background-image: url(../img/test.png);
 #mod-detail .total-pictures .date{
   font-size: 22px;
 }
-#mod-detail .head .title{
-
+#mod-detail .head{
+  margin-top: 1px;
+  background-color: #F5F5ED;
+  border-bottom: 1px solid #D6D6D6;
+  padding: 20px 5px 35px 5px;
+  background-image: url(../img/test.png);
+}
+#mod-detail .head .title {
+  padding-top: 10px;
 }
 #mod-detail .head .author{
   font-size: 20px;
@@ -462,6 +471,9 @@ background-image: url(../img/test.png);
 #mod-detail .float-wrap .buttons{
   float: right;
   margin-bottom: 10px;
+  position: relative;
+  top: -60px;
+  left: 5px;
 }
 #mod-detail .float-wrap .buttons > div{
   cursor: pointer;

@@ -193,17 +193,20 @@
   </section><!-- /#mod-upload -->
 
   <section class="mod" id="mod-detail" ng-controller="DetailCtrl">
+    <div class="head">
+      <div class="container">
+        <div class="left">
+          <div class="title" ng-bind-template="{{title}}"></div>
+          <div class="author" ng-bind-template="@{{author}}"></div>
+        </div>
+        
+        <div class="total-pictures"><span ng-bind-template="{{total}}"></span><i ng-pluralize count="total" when="{'0': ': ( no picture available.', '1': 'picture', 'other': 'pictures'}">pictures.</i><br /><span ng-bind-template="{{dateFilter(date, 0)}}" class="date"></span></div>
+      </div>
+    </div>
     <div class="container">
       <div class="wrap-padding">
         <div class="top-wrapper">
-          <div class="head">
-            <div class="left title-border">
-              <span class="title" ng-bind-template="{{title}}"></span>
-              <span class="author" ng-bind-template="@{{author}}"></span>
-            </div>
-            
-            <div class="total-pictures"><span ng-bind-template="{{total}}"></span><i ng-pluralize count="total" when="{'0': ': ( no picture available.', '1': 'picture', 'other': 'pictures'}">pictures.</i><br /><span ng-bind-template="{{dateFilter(date, 0)}}" class="date"></span></div>
-          </div>
+          
           <div class="clear"></div>
      
           <div class="float-wrap">
