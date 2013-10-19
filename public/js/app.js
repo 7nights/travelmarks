@@ -45,6 +45,9 @@ angular.module('myApp', ['ngSanitize', 'myApp.filters', 'myApp.services', 'myApp
     addListener('detail/:id', function (args) {
       ModManager.enter('detail');
     }).
+    addListener('detail/:id/:tworow', function (args) {
+      ModManager.enter('detail');
+    }).
     addListener('explore', function () {
       ModManager.enter('explore');
     });

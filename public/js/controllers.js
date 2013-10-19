@@ -408,6 +408,7 @@ angular.module('myApp.controllers', []).
         $scope.date = data.date;
         $scope.like_count = data.like_count;
         $scope.liked = data.liked;
+        $scope.published = data.published;
 
         if ($scope.author === User.name) {
           $scope.editable = true;
@@ -651,8 +652,15 @@ angular.module('myApp.controllers', []).
     });
     
   }]).
-  controller('UploadCtrl', ['$scope', '$http', 'ModManager', 'Item', '$q', 'Util', 'HashManager', 'area', 'lazyLoad', function ($scope, $http, ModManager, Item, $q, Util, HashManager, area, lazyLoad) {
+  controller('UploadCtrl', ['$scope', '$http', 'ModManager', 'Item', '$q', 'Util', 'HashManager', 'area', 'lazyLoad', 'Loading', function ($scope, $http, ModManager, Item, $q, Util, HashManager, area, lazyLoad, Loading) {
     // ---------- initialize ----------
+    // switcher
+    $scope.finish_status_switcher = {
+      off: 'Unfinished',
+      on: 'Finished',
+      status: 'off'
+    };
+
     // 最后一次被点击的tag
     var lastClickedTag;
     
@@ -879,7 +887,8 @@ angular.module('myApp.controllers', []).
 
         // 判断mark是否有更改, 如果有提交到队列
         if ($scope.title !== cachedData.title ||
-          $scope.summary !== cachedData.summary) {
+          $scope.summary !== cachedData.summary ||
+          $scope.finish_status_switcher.status !== (cachedData.published?'on':'off')) {
           funcs.push(function () {
             totalUpdateCount++;
             $http({
@@ -888,9 +897,16 @@ angular.module('myApp.controllers', []).
               data: {
                 _id: $scope.id,
                 title: $scope.title,
-                summary: $scope.summary
+                summary: $scope.summary,
+                published: !cachedData.published
               }
-            }).success(function () {
+            }).success(function (data) {
+              console.log(data);
+              if (data.status === -1) {
+                $scope.uploading = false;
+
+                return Util.alert('Failed', '上传失败: ' + data.message);
+              }
               finishTotalUpdate('mark change');
             });
           });
@@ -1171,6 +1187,7 @@ angular.module('myApp.controllers', []).
           if (totalUpdateCount <= 0 && $scope.uploading && promises <= 0 && location.hash === '#upload/edit') {
             history.back();
             $scope.uploading = false;
+            $scope.$digest();
           }
         }, 300);
 
@@ -1200,7 +1217,8 @@ angular.module('myApp.controllers', []).
           url: 'mark/create',
           data: JSON.stringify({
             title: $scope.title,
-            summary: $scope.summary
+            summary: $scope.summary,
+            published: $scope.finish_status_switcher.status === 'on' ? true : false
           })
         }).
         success(function (data, status, headers, config) {
@@ -1368,6 +1386,13 @@ angular.module('myApp.controllers', []).
     };
 
     // ---------- events ----------
+    $scope.$watch('uploading', function (newVal, oldVal) {
+      if (newVal === true) {
+        Loading.start();
+      } else {
+        Loading.end();
+      }
+    });
     ModManager.addListener('before', function (mod) {
       if (mod !== 'upload' ) {
         return;
@@ -1406,6 +1431,7 @@ angular.module('myApp.controllers', []).
         $scope.summary = m.summary;
         $scope.locTags = [];
         $scope.id = m.id;
+        $scope.finish_status_switcher.status = m.published?'on':'off';
         var added = [];
         m.items.forEach(function (val) {
           var tag = val.tag;
@@ -1810,6 +1836,10 @@ angular.module('myApp.controllers', []).
           
           function sendRequest() {
             if (!lsScope.inputPos) return;
+            if (!req) {
+              req = window.google_maps_req;
+              return setTimeout(sendRequest, 100);
+            }
             req.textSearch({
               query: lsScope.inputPos
             }, function (arr) {

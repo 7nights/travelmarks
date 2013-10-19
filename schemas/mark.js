@@ -10,6 +10,7 @@ var MarkSchema = new Schema({
   author: {type: ObjectId},
   cover: String,
   read: {type: Number, default: 0},
+  published: {type: Boolean, default: true},
 
   latitude: Number,
   longtitude: Number,

@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css" />
   <link rel="stylesheet" href="css/flat-ui.css" />
   <link rel="stylesheet" href="css/app.css" />
-  <link rel="shortcut icon" href="img/favicon.png" type="image/x-icon" />
+  <link rel="shortcut icon" href="img/icons/favicon.png" type="image/x-icon" />
   <!--<link rel="stylesheet" href="application.css" />-->
   <script type="text/javascript" src="lib/jquery.min.js"></script>
   <!--<script type="text/javascript" src="lib/binaryajax.js"></script>
@@ -17,9 +17,10 @@
 
 </head>
 <body class="custom-scrollbar custom-scrollbar-large">
+  <div class="global-loading"></div>
   <div class="nav" ng-controller="NavCtrl" ng-hide="hideNav">
     <!-- <div class="logo left"><img src="img/text-logo.png" />Travel Marks</div> -->
-    <div class="logo logo-v2 left" ><img src="img/logo-white.png"></div>
+    <div class="logo logo-v2 left" ><img src="img/icons/footprint-white-without-bg.png"></div>
     <div class="nav-a left">
       <a href="#explore" id="nav-btn-explore"><i class="icon-globe"></i> Explore</a>
       <a href="#home/refresh" id="nav-btn-home" class="active"><i class="icon-map-marker icon-white"></i>Marks</a>
@@ -39,7 +40,7 @@
     <div class="container">
       <div class="">
         <div>
-          <div class="brand"><img src="img/logo-small-rotate.png" />TravelMarks</div>
+          <div class="brand"><img src="img/icons/logo-white-without-shadow.png" />TravelMarks</div>
         </div>
         <div class="description">
           Mark every corner you have ever been.<br />
@@ -119,8 +120,12 @@
     <input type="file" class="upload-input" ng-change="fileChange()" ng-model="inputFile" />
     <div class="wrap-padding">
       <div class="container position-holder">
-        <h3 ng-bind-template='{{getModTitle()}}'></h3>
-        <div class="loading-animation" ng-show='uploading'>
+        <h3>
+          <span ng-bind-template='{{getModTitle()}}'></span>
+          <div class="switcher" switcher="finish_status_switcher" role="button">
+          </div>
+        </h3>
+        <div class="loading-animation" ng-show='false'>
           <span>.</span><span>.</span><span>.</span>
         </div>
 

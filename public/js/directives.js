@@ -21,10 +21,56 @@ angular.module('myApp.directives', []).
       element[0].addEventListener('input', resize);
       element[0].addEventListener('click', resize);
       element[0].addEventListener('blur', function (ev) {
-        $(ev.target).height(65);
+        setTimeout(function () {
+          $(ev.target).height(65);
+        }, 200);
       });
     };
   }).
+  directive('switcher', ['$compile', function ($compile) {
+    function appendElements(target, src) {
+      [].forEach.call(src, function (val) {
+        target.appendChild(val);
+      });
+    }
+
+    return function (scope, element, attrs) {
+      var init = false;
+      var elements = angular.element('<i class="thumb"></i><span class="switcher-on">{{' + attrs.switcher + '.on}}</span><span class="switcher-off">{{' + attrs.switcher + '.off}}</span>');
+      var clonedElement = $compile(elements)(scope, function (clonedElement, scope) {
+        appendElements(element[0], clonedElement);
+        element[0].addEventListener('click', function () {
+          if (scope[attrs.switcher].status === 'on') {
+            scope[attrs.switcher].status = 'off';
+          } else {
+            scope[attrs.switcher].status = 'on';
+          }
+          scope.$digest();
+        });
+      });
+      scope.$watch(attrs.switcher + '.status', function checkStatus(newVal, oldVal) {
+        if (element[0].querySelector('i').offsetHeight === 0) return setTimeout(function () {
+          checkStatus(newVal, oldVal);
+        }, 100);
+        if (newVal === 'on') {
+          element[0].classList.add('on');
+          element[0].classList.remove('off');
+          element[0].querySelector('i').style.left = element[0].offsetWidth - 20 + 'px';
+        } else {
+          element[0].classList.add('off');
+          element[0].classList.remove('on');
+          element[0].querySelector('i').style.left = '2px';
+        }
+        if (!init) {
+          init = 1;
+          setTimeout(function () {
+            element[0].classList.add('inited');
+          }, 500);
+        }
+      });
+
+    };
+  }]).
   directive('autoCompletePlaces', ['$http', function ($http) {
     var styleSheet = document.createElement('style');
     styleSheet.innerHTML = '.auto-complete-places-container{position: absolute;display: none;}';

@@ -4,12 +4,13 @@ var Mark = require('../schemas').Mark,
 /**
  * 创建一个mark
  */
-exports.create = function (title, summary, date, author, callback){
+exports.create = function (title, summary, date, author, published, callback){
   var mark = new Mark;
   mark.title = title;
   mark.summary = summary;
   mark.date = date;
   mark.author = author;
+  mark.published = published;
   mark.save(callback);
 };
 

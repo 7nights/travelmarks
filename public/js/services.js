@@ -283,6 +283,30 @@ angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
       return area;
     };
   }).
+  provider('Loading', function () {
+    var count = 0;
+    var _methods = {
+      start: function () {
+        count ++;
+        checkCount();
+      },
+      end: function () {
+        count --;
+        checkCount();
+      }
+    };
+    function checkCount() {
+      if (count > 0) {
+        document.querySelector('.global-loading').style.display = 'block';
+      } else {
+        count = 0;
+        document.querySelector('.global-loading').style.display = 'none';
+      }
+    }
+    this.$get = function () {
+      return _methods;
+    };
+  }).
   provider('User', function () {
     var scope;
     angular.injector(['ng']).invoke(['$rootScope', function($rootScope, version){
@@ -705,9 +729,10 @@ angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
       }
 
       /*
+       * Util.alert
        * 显示alert窗口
        * 调用此函数返回一个对象,设置这个对象的onclose, oncancel, onok属性可监听事件
-       * 此对象还有一个close对象可调用, 用来关闭alert窗口
+       * 此对象还有一个close函数可调用, 用来关闭alert窗口
        */
       return function (title, msg, type) {
         var obj = new AlertCtrl();

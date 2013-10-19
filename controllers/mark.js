@@ -27,11 +27,12 @@ exports.createMark = function (req, res, next) {
     var title = sanitize(sanitize(req.body.title).trim()).xss().substr(0, 60),
         summary = sanitize(sanitize(req.body.summary).trim()).xss().substr(0, 3000),
         date = Date.now(),
-        author = req.session.user._id;
+        author = req.session.user._id,
+        published = !!req.body.published;
   } catch (e) {
     return res.json({status: -1, message: "非法输入"});
   }
-  Mark.create(title, summary, date, author, function(err, mark){
+  Mark.create(title, summary, date, author, published, function(err, mark){
     if(err) return next(err);
     res.json({status: 1, message: '创建成功', data: {'markId': mark._id}});
   });
@@ -87,7 +88,7 @@ exports.exploreMarks = function (req, res, next) {
 
   switch(type) {
     case 'latest':
-      Mark.getMarksByQuery({}, {skip: offset, limit: 12, sort: {date: -1}}, function (err, marks) {
+      Mark.getMarksByQuery({published: {$ne: false}}, {skip: offset, limit: 12, sort: {date: -1}}, function (err, marks) {
         if (err) return next(err);
         var done = function () {
           var result = [];
@@ -138,7 +139,8 @@ exports.getMark = function (req, res, next) {
       items: items,
       author_id: mark.author,
       like_count: likeInfo.count,
-      liked: likeInfo.liked
+      liked: likeInfo.liked,
+      published: mark.published
     };
 
     Mark.increaseRead(req.param('id'));
@@ -281,6 +283,10 @@ exports.alterMark = function (req, res, next) {
     var summary;
     if (req.body.summary && (summary = sanitize(sanitize(req.body.summary).xss()).trim().substr(0, 3000))) {
       m.summary = summary;
+    }
+    var published;
+    if (req.body.published !== undefined) {
+      m.published = !!req.body.published;
     }
     m.save(function (err) {
       if (err) return next(err);

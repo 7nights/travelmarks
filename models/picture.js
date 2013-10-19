@@ -29,6 +29,7 @@ exports.deletePictures = function (pics, callback) {
     }, function (err) {
       ep.emit('deleted');
     });
+
     require('fs').unlink(require('path').join('public/', val));
   });
 };
