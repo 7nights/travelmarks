@@ -123,7 +123,7 @@ exports.getMark = function (req, res, next) {
   if (!req.param('id')) {
     return res.json({status: -1, message: '请输入完整呀!'});
   }
-  var ep = EventProxy.create(['markGot', 'itemsGot', 'usernameGot', 'likeGot', function (mark, items, username, likeInfo) {
+  var ep = EventProxy.create(['markGot', 'itemsGot', 'userinfoGot', 'likeGot', function (mark, items, userinfo, likeInfo) {
     var count = 0;
     items.forEach(function (val) {
       count += val.pictures.length;
@@ -132,7 +132,8 @@ exports.getMark = function (req, res, next) {
       title: mark.title,
       location: mark.location,
       read: mark.read || 0,
-      author: username,
+      author: userinfo.name,
+      author_avatar: utils.md5(userinfo.email),
       summary: mark.summary,
       total: count,
       date: mark.date,
@@ -150,7 +151,7 @@ exports.getMark = function (req, res, next) {
   function findUser(id) {
     User.getUserById(id, function (err, u) {
       if (err) return next(err);
-      ep.emit('usernameGot', u.name);
+      ep.emit('userinfoGot', {name: u.name, email: u.email});
     });
   }
   Mark.getMarkById(req.param('id'), function (err, m) {
