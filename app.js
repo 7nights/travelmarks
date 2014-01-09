@@ -30,14 +30,14 @@ app.configure(function () {
 
   var MAX_AGE  = 3600000 * 24 * 30;
   
-  app.use('/user_data', express.static(path.join(__dirname, 'public', 'user_data'), {maxAge: MAX_AGE}));
+  app.use('/user_data', express.static(path.join(__dirname, 'public', 'user_data'), {maxAge: 0}));
 
   app.use(express.compress());
   // routes
   routes(app);
 
   app.get(/\/$/, utils.csrf, function (req, res, next) {
-    if (req.session.user) {
+    if (req.session && req.session.user) {
       res.cookie('userinfo', JSON.stringify({
         name: req.session.user.name,
         email: req.session.user.email,

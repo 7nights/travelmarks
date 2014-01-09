@@ -933,8 +933,8 @@ angular.module('myApp.controllers', []).
                 markId: $scope.id,
                 name: val.tag.name,
                 addr: val.tag.pos,
-                lat: val.tag.results[val.tag.activeTag].geometry.location.jb,
-                lng: val.tag.results[val.tag.activeTag].geometry.location.kb
+                lat: val.tag.results[val.tag.activeTag].geometry.location.lat(),
+                lng: val.tag.results[val.tag.activeTag].geometry.location.lng()
               }
             }).
             success(function (data) {
