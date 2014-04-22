@@ -869,14 +869,16 @@ angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
 
       return;
       */
+
+      var rAF = requestAnimationFrame || webkitRequestAnimationFrame || mozRequestAnimationFrame || oRequestAnimationFrame || msRequestAnimationFrame;
       $('#mod-' + leaving).css({'-webkit-transform': 'translateX(-50px)', 'opacity': 0});
       setTimeout(function () {
         $('#mod-' + leaving).css({display: 'none', '-webkit-transform': 'translateX(0px)', opacity: 1});
         $('#mod-' + coming).css({display: 'block', opacity: 0, '-webkit-transform': 'translateX(50px)'});
-        setTimeout(function () {
+        rAF(function () {
           $('#mod-' + coming).css({'-webkit-transform': 'translateX(0px)', opacity: 1});
           document.getElementById('mod-' + coming).style.removeProperty('-webkit-transform');
-        }, 0);
+        });
         unload();
         setTimeout(function () {after();}, 300);
         
