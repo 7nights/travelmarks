@@ -875,7 +875,7 @@ angular.module('myApp.services', ['ng', 'HashManager', 'ngSanitize']).
       setTimeout(function () {
         $('#mod-' + leaving).css({display: 'none', '-webkit-transform': 'translateX(0px)', opacity: 1});
         $('#mod-' + coming).css({display: 'block', opacity: 0, '-webkit-transform': 'translateX(50px)'});
-        $('#mod-' + comming)[0].offsetWidth;
+        $('#mod-' + coming)[0].offsetWidth;
         rAF(function () {
           $('#mod-' + coming).css({'-webkit-transform': 'translateX(0px)', opacity: 1});
           document.getElementById('mod-' + coming).style.removeProperty('-webkit-transform');
